@@ -1,0 +1,10 @@
+[project]
+name = "nyishi-asr-recovery"
+version = "0.1.0"
+description = "Restored Dataset A preprocessing; experimental historical IPA policies"
+requires-python = ">=3.11"
+
+[tool.nyishi_recovery]
+entrypoint = "run_preprocessing.py"
+policy_versions = ["A_v1", "A_v2"]
+# No dependency installation occurs automatically. See docs/RESTORATION.md.
