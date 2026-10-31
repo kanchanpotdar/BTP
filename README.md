@@ -38,6 +38,18 @@ The candidates contain **14.826 decoded hours** before any speaker/session split
 
 The eligibility, speaker-hours and speaker-status images come from saved Phase 1 notebook outputs. The duration image was generated separately from the same saved Phase 1 audit because its notebook plot cell had not been executed. No train/validation/test split or model baseline is implied by these figures.
 
+## Phase 2: transcript formatting policy
+
+The [Phase 2 notebook](notebooks/Phase-2.ipynb) includes its saved tables and plots. It reads the 5,086 first-pass candidates and retains every `transcript_raw`. Its derived `transcript_phase2` applies Unicode NFD, trims outer whitespace and collapses repeated ordinary spaces. The run changed **497 rows (9.77%)**, entirely because of repeated spaces; NFD and outer trimming changed zero rows. The character total fell from 522,368 to 521,747, a difference of 621 spaces. Both versions contain 102 distinct code points in this candidate subset. The source hash was unchanged and the policy was idempotent.
+
+![Phase 2 formatting changes and transcript lengths](assets/phase2_normalization_and_length.png)
+
+![Phase 2 audio duration versus label length](assets/phase2_duration_vs_label_length.png)
+
+The plots describe label formatting and length, not transcription quality or model accuracy. The Unicode inventory includes dental combining marks, nasalization, length marks and rare combining accents. Their frequency does not determine whether they are linguistically meaningful. The first baseline preserves these marks and does not automatically convert `g`/`ɡ` or punctuation-like symbols.
+
+The targeted Phase 2.5 review queue is the **41 distinct candidate clips** containing `:`, `;` or `[`, approximately **0.195 decoded hours**. Their meanings are unresolved; keep them out of primary held-out references until reviewed. A single clip contains two combining acute accents and should also be reviewed without deleting the marks. Phase 2.5 also checks proposed speaker merges, pair-linked and multi-person train-only groups, one recording session spanning two proposed groups, and exact-audio overlap before Phase 3 freezes splits. The pinned IPA-Whisper processor's tokenizer round-trip and target-length checks remain a model-compatibility gate; no processor or weights were downloaded in Phase 2.
+
 ## Findings from the recovered Narration analyses
 
 The local recovered notebooks retain complete originals for thesis reporting. The three published analysis notebooks now include their saved non-audio plots, tables and textual results. Embedded WAV playback outputs are omitted from the public copies; the originals remain in the local BTP directory. The aggregate findings are summarized here; bulk datasets and review workbooks are not published.
@@ -52,7 +64,7 @@ The next research step uses `transcript_raw`, `transcript_missing`, `audio_ok`, 
 
 ## Contents
 
-- `notebooks/`: Phase 0 and Phase 1 notebooks with saved results, plus three adapted historical analysis notebooks with saved plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
+- `notebooks/`: Phase 0, Phase 1 and Phase 2 notebooks with saved results, plus three adapted historical analysis notebooks with saved plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
 - `src/nyishi_asr/` and `run_preprocessing.py`: historical staged reconstruction and integrity checks.
 - `scripts/prepare_narration_baseline.py`: earlier candidate-pool, duplicate-waveform and grouping analysis; its IPA-policy assumptions are not the selected minimal-normalization baseline.
 - `tests/`: normalization, integrity, source-recovery and dataset-dependent checks.
