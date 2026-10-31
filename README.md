@@ -1,6 +1,6 @@
 # Nyishi Narration ASR research
 
-Source code and output-free analysis notebooks for a Nyishi IPA speech-recognition research project. Current scope is Dataset A Narration; YouTube is deferred.
+Source code and analysis notebooks with saved plots and tables for a Nyishi IPA speech-recognition research project. Current scope is Dataset A Narration; YouTube is deferred.
 
 ## Status
 
@@ -8,15 +8,39 @@ This initial snapshot preserves historical data exploration, staged metadata/IPA
 
 ## Phase 0: local inventory
 
-The [Phase 0 notebook](notebooks/Phase-0.ipynb) records the 31 October 2026 local environment and data inventory. Its published copy contains source cells and a written conclusion; saved execution outputs remain in the local research copy. All required local inputs were found. The 59 Narration Parquet shards and the starting `master_A_v1_1.parquet` each contain 6,718 rows; the master has 54 columns. The local Python 3.11.1 environment had NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. PyTorch and the model-training packages were not installed there. Kaggle GPU type, memory and quota have not been recorded.
+The [Phase 0 notebook](notebooks/Phase-0.ipynb) records the 31 October 2026 local environment and data inventory, with its saved cell outputs. All required local inputs were found. The 59 Narration Parquet shards and the starting `master_A_v1_1.parquet` each contain 6,718 rows; the master has 54 columns. The local Python 3.11.1 environment had NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. PyTorch and the model-training packages were not installed there. Kaggle GPU type, memory and quota have not been recorded.
 
 The first-pass manifest counts are 5,651 rows flagged with transcripts, 1,067 flagged missing, 6,714 marked `audio_ok`, three with zero decoded duration, and 708 over 30 seconds. Combining labelled, audio-OK and 0.5–30-second conditions gives 5,086 candidate rows. These conditions have not yet undergone a final QC waterfall or speaker/session split; the candidate count is not a training-set size.
 
 ![Narration inventory counts](assets/narration_inventory.svg)
 
+## Phase 1: eligibility and audio checks
+
+The [Phase 1 notebook](notebooks/Phase-1.ipynb) now includes its saved output tables and plots. Its 6,718 master rows joined one-to-one with the full-decode facts. There were no full-decode failures, sample-rate disagreements, channel disagreements or disagreements between decoded-duration fields. The filtering waterfall is:
+
+| First applicable outcome | Clips |
+|---|---:|
+| Initial 0.5–30-second candidates | 5,086 |
+| Missing or empty reference | 1,067 |
+| Outside initial duration range | 561 |
+| Zero audio frames | 3 |
+| Duration discrepancy held for review | 1 |
+
+The candidates contain **14.826 decoded hours** before any speaker/session split. The 561 duration exclusions comprise 528 labelled clips above 30 seconds and 33 labelled, nonempty clips below 0.5 seconds. Another three labelled clips below 0.5 seconds have zero frames and are counted under that earlier exclusion. One duration-mismatch clip, `A_004972`, is held for review. Of the candidates, 967 are provisionally train-only because of pair linkage, multiple speakers or uncertain identity. The source master and decode-facts hashes did not change during the Phase 1 run.
+
+![Phase 1 eligibility reasons](assets/phase1_eligibility_reasons.png)
+
+![Phase 1 duration distribution](assets/phase1_duration_distribution.png)
+
+![Phase 1 speaker hours](assets/phase1_speaker_hours.png)
+
+![Phase 1 speaker status and train-only flags](assets/phase1_speaker_status.png)
+
+The eligibility, speaker-hours and speaker-status images come from saved Phase 1 notebook outputs. The duration image was generated separately from the same saved Phase 1 audit because its notebook plot cell had not been executed. No train/validation/test split or model baseline is implied by these figures.
+
 ## Findings from the recovered Narration analyses
 
-The local recovered notebooks retain the original plots and outputs for thesis reporting. Their aggregate findings are summarized here; the original notebooks, review fields and individual transcripts are not published.
+The local recovered notebooks retain complete originals for thesis reporting. The three published analysis notebooks now include their saved non-audio plots, tables and textual results. Embedded WAV playback outputs are omitted from the public copies; the originals remain in the local BTP directory. The aggregate findings are summarized here; bulk datasets and review workbooks are not published.
 
 - The original row-level splits overlap heavily in speakers: 57 of 60 public speaker IDs appear in multiple splits and 49 in all three. A new speaker/session-aware split is needed before a held-out evaluation.
 - Earlier proposed grouping reduces 60 public speaker IDs to 55 groups, but name-based merges are unverified. The current status distribution is 5,712 `ok`, 622 `linked_to_pair`, 208 `multi_person`, and 176 `uncertain_identity`.
@@ -28,7 +52,7 @@ The next research step uses `transcript_raw`, `transcript_missing`, `audio_ok`, 
 
 ## Contents
 
-- `notebooks/`: three adapted analysis notebooks without saved outputs, execution counters or embedded media. Original notebooks with results remain private in the local workspace for thesis reporting.
+- `notebooks/`: Phase 0 and Phase 1 notebooks with saved results, plus three adapted historical analysis notebooks with saved plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
 - `src/nyishi_asr/` and `run_preprocessing.py`: historical staged reconstruction and integrity checks.
 - `scripts/prepare_narration_baseline.py`: earlier candidate-pool, duplicate-waveform and grouping analysis; its IPA-policy assumptions are not the selected minimal-normalization baseline.
 - `tests/`: normalization, integrity, source-recovery and dataset-dependent checks.
@@ -42,7 +66,7 @@ Audio, transcripts, manifests, speaker/reviewer metadata, review workbooks, loca
 
 Use Python 3.11 and the listed dependencies. This snapshot is not a standalone training package: historical recipes expect privately supplied files in their former layout, including `raw/A_narration`, `manifests`, `cleaning`, `metadata`, reconstruction evidence, and some original recovery inputs. A fresh raw download alone does not recreate those inputs. Source-recovery/dataset tests require those fixtures and should not be presented as passing without them. The local directory cleanup changed their locations; the historical code is retained here as a research record, not an already-integrated pipeline for that layout.
 
-The normalization and integrity unit tests can run without dataset fixtures. Notebooks also contain staged historical assumptions and must be inspected before execution. Some notebook source cells include short linguistic examples; bulk transcripts and saved data outputs are absent.
+The normalization and integrity unit tests can run without dataset fixtures. Notebooks also contain staged historical assumptions and must be inspected before execution. Their saved outputs are historical evidence; they do not make the older code directly runnable in the current streamlined layout. Some notebook outputs include small displayed transcript tables, while bulk datasets, audio payloads and review files remain outside this repository.
 
 ## Next experiment
 
