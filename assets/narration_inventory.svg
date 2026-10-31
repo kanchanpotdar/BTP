@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="290" viewBox="0 0 760 290" role="img" aria-labelledby="title desc">
+  <title id="title">Narration inventory: labelled and candidate clips</title>
+  <desc id="desc">Of 6718 Narration rows, 5651 are flagged with transcripts, 1067 are flagged missing, and 5086 meet first-pass labelled, audio-OK, 0.5 to 30 second conditions before splitting.</desc>
+  <rect width="760" height="290" fill="#fff"/>
+  <text x="24" y="32" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#172033">Narration inventory · 31 October 2026</text>
+  <text x="24" y="56" font-family="Arial,sans-serif" font-size="13" fill="#505b6a">Counts from the starting 6,718-row master; candidate pool is before speaker/session splitting</text>
+  <g font-family="Arial,sans-serif" font-size="15" fill="#172033">
+    <text x="24" y="101">All rows</text><text x="24" y="151">Transcript flagged present</text><text x="24" y="201">First-pass candidates</text><text x="24" y="251">Transcript flagged missing</text>
+  </g>
+  <rect x="235" y="80" width="420" height="28" rx="4" fill="#3659a2"/>
+  <rect x="235" y="130" width="353" height="28" rx="4" fill="#4c78a8"/>
+  <rect x="235" y="180" width="318" height="28" rx="4" fill="#38a18a"/>
+  <rect x="235" y="230" width="67" height="28" rx="4" fill="#e4a34a"/>
+  <g font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#172033">
+    <text x="665" y="100">6,718</text><text x="598" y="150">5,651</text><text x="563" y="200">5,086</text><text x="312" y="250">1,067</text>
+  </g>
+</svg>

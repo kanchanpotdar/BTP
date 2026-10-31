@@ -6,6 +6,26 @@ Source code and output-free analysis notebooks for a Nyishi IPA speech-recogniti
 
 This initial snapshot preserves historical data exploration, staged metadata/IPA-policy reconstruction, and experimental curation code. No final speaker-disjoint split, trained baseline or Nyishi accuracy result is supplied. The newer working decision is minimal formatting normalization; the historical A_v1/A_v2 phonetic substitutions remain provisional research alternatives.
 
+## Phase 0: local inventory
+
+The [Phase 0 notebook](notebooks/Phase-0.ipynb) records the 31 October 2026 local environment and data inventory. Its published copy contains source cells and a written conclusion; saved execution outputs remain in the local research copy. All required local inputs were found. The 59 Narration Parquet shards and the starting `master_A_v1_1.parquet` each contain 6,718 rows; the master has 54 columns. The local Python 3.11.1 environment had NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. PyTorch and the model-training packages were not installed there. Kaggle GPU type, memory and quota have not been recorded.
+
+The first-pass manifest counts are 5,651 rows flagged with transcripts, 1,067 flagged missing, 6,714 marked `audio_ok`, three with zero decoded duration, and 708 over 30 seconds. Combining labelled, audio-OK and 0.5–30-second conditions gives 5,086 candidate rows. These conditions have not yet undergone a final QC waterfall or speaker/session split; the candidate count is not a training-set size.
+
+![Narration inventory counts](assets/narration_inventory.svg)
+
+## Findings from the recovered Narration analyses
+
+The local recovered notebooks retain the original plots and outputs for thesis reporting. Their aggregate findings are summarized here; the original notebooks, review fields and individual transcripts are not published.
+
+- The original row-level splits overlap heavily in speakers: 57 of 60 public speaker IDs appear in multiple splits and 49 in all three. A new speaker/session-aware split is needed before a held-out evaluation.
+- Earlier proposed grouping reduces 60 public speaker IDs to 55 groups, but name-based merges are unverified. The current status distribution is 5,712 `ok`, 622 `linked_to_pair`, 208 `multi_person`, and 176 `uncertain_identity`.
+- Narration audio is 16 kHz, mono PCM16. Three IDs have zero frames: `A_004973`, `A_006614`, `A_006615`. `A_004972` is 2.531 seconds decoded versus 3.89 seconds stated and needs boundary review. There are 708 clips above 30 seconds; 528 have transcript references. Long clips stay in the master for possible later aligned segmentation.
+- Raw references contain 107 distinct code points including space and are already in Unicode NFD. Repeated ordinary spaces occur in 640 references. Plain `g` and IPA `ɡ` both occur frequently. The old A_v1 and A_v2 conventions differ in 51 transcript strings; fewer unresolved flags under A_v2 do not validate its linguistic choices.
+- The audio signal audit found no decoding failures, three empty recordings and no nonempty all-zero recordings. It flagged 104 clips below −50 dBFS RMS. Those level measurements are review signals, not evidence that the speech is unusable.
+
+The next research step uses `transcript_raw`, `transcript_missing`, `audio_ok`, `audio_issue`, `duration_decoded`, and stable `sample_id`/`audio_path` fields for a derived eligibility manifest. Speaker and session fields are needed for splits. In the starting master, `transcript_normalized`, `duplicate_group_id`, and `final_split` are unfilled; no final target policy or split can be inferred from them.
+
 ## Contents
 
 - `notebooks/`: three adapted analysis notebooks without saved outputs, execution counters or embedded media. Original notebooks with results remain private in the local workspace for thesis reporting.
