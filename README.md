@@ -4,7 +4,7 @@ Source code and analysis notebooks with saved plots and tables for a Nyishi IPA 
 
 ## Status
 
-This initial snapshot preserves historical data exploration, staged metadata/IPA-policy reconstruction, and experimental curation code. No final speaker-disjoint split, trained baseline or Nyishi accuracy result is supplied. The newer working decision is minimal formatting normalization; the historical A_v1/A_v2 phonetic substitutions remain provisional research alternatives.
+The project has completed local inventory, eligibility screening, conservative transcript formatting, and three speaker-group split proposals through **Phase 3.5B**. Phase 3.5B is the preferred proposal for the first IPA-Whisper baseline. **No split has been frozen, no model has been trained, and no Nyishi accuracy result is supplied.** The historical A_v1/A_v2 phonetic substitutions remain provisional research alternatives.
 
 ## Phase 0: local inventory
 
@@ -48,7 +48,47 @@ The [Phase 2 notebook](notebooks/Phase-2.ipynb) includes its saved tables and pl
 
 The plots describe label formatting and length, not transcription quality or model accuracy. The Unicode inventory includes dental combining marks, nasalization, length marks and rare combining accents. Their frequency does not determine whether they are linguistically meaningful. The first baseline preserves these marks and does not automatically convert `g`/`ɡ` or punctuation-like symbols.
 
-The targeted Phase 2.5 review queue is the **41 distinct candidate clips** containing `:`, `;` or `[`, approximately **0.195 decoded hours**. Their meanings are unresolved; keep them out of primary held-out references until reviewed. A single clip contains two combining acute accents and should also be reviewed without deleting the marks. Phase 2.5 also checks proposed speaker merges, pair-linked and multi-person train-only groups, one recording session spanning two proposed groups, and exact-audio overlap before Phase 3 freezes splits. The pinned IPA-Whisper processor's tokenizer round-trip and target-length checks remain a model-compatibility gate; no processor or weights were downloaded in Phase 2.
+## Phase 2.5: targeted review before splitting
+
+The [Phase 2.5 notebook](notebooks/Phase-2.5.ipynb) saved its review tables and plot. Its queue contains **42 distinct clips / 0.201 hours**: 41 clips with `:`, `;` or `[`, and one clip with combining acute accents. These symbols are not automatically deleted or rewritten. The first split proposals conservatively set all 42 clips aside; they remain in the source data. The notebook also lists five proposed speaker merges, 967 provisionally train-only candidate rows spanning nine groups, and one recording session linking two proposed groups. The review decisions remain pending.
+
+![Phase 2.5 targeted review workload](assets/phase2_5_review_workload.png)
+
+The pinned IPA-Whisper processor's tokenizer round-trip and target-length checks remain a model-compatibility gate; no processor or weights were downloaded in Phase 2 or 2.5.
+
+## Phase 3: first leakage-aware split proposal
+
+The [Phase 3 notebook](notebooks/Phase-3.ipynb) removed the 42 uncertain-symbol clips from the initial supervised pool, leaving **5,044 clips / 14.625 hours**. It hashed decoded waveforms and connected rows that share a proposed speaker group, public/raw speaker ID, recording session or exact audio. The resulting 44 indivisible components were assigned as whole units. The proposed split was **2,876 train / 1,428 validation / 740 test clips** (**10.50 / 2.19 / 1.93 hours**). Known speaker, session and exact-audio overlap across splits was zero; no train-only rows entered held-out sets. One complete transcript string appeared across splits, which is prompt overlap, not evidence of identical audio.
+
+![Phase 3 split size and speaker groups](assets/phase3_split_sizes.png)
+
+![Phase 3 category balance](assets/phase3_category_balance.png)
+
+The first proposal was not frozen. **52.9% of validation clips were under 3 seconds**, so validation could overemphasize very short utterances when choosing a checkpoint. The test set was also 96.4% November 2024 by audio hours. Month is a diagnostic rather than an automatic reason to reject a split, but it may signal changed speakers or recording conditions.
+
+## Phase 3.5: category-aware revision
+
+The [Phase 3.5 notebook](notebooks/Phase-3.5.ipynb) searched whole-component assignments using hours and metadata for month, age, duration and gender. Its revised counts were **3,055 train / 542 validation / 1,447 test clips** (**10.23 / 2.20 / 2.19 hours**). Known structural overlap remained zero. Its internal search score improved, but that score is a design objective, not model accuracy.
+
+![Phase 3.5 split comparison](assets/phase3_5_split_comparison.png)
+
+![Phase 3.5 category comparison](assets/phase3_5_category_comparison.png)
+
+The revision exposed two more important problems: **one component supplied 90.5% of validation hours**, validation was **98.8% female by hours**, and **52.3% of test clips** were under 3 seconds. This proposal was not frozen.
+
+## Phase 3.5B: preferred split proposal
+
+The [Phase 3.5B notebook](notebooks/Phase-3.5B.ipynb) and its [deterministic proposal script](scripts/phase3_5b_proposal.py) put train-only components and four dominating components in training, then searched the remaining whole-component assignments. The criteria emphasize useful validation and test sets: both genders by audio hours, multiple independent components, limited influence from any one component, and a manageable share of clips under 3 seconds. They do not optimize model results.
+
+| Phase 3.5B split | Clips | Hours | Components | Female share of hours | Clips under 3 s | Largest component share of hours |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 3,629 | 10.85 | 15 | 59.7% | 24.0% | 33.7% |
+| Validation | 732 | 1.88 | 16 | 50.9% | 19.9% | 24.1% |
+| Test | 683 | 1.89 | 13 | 50.9% | 13.8% | 33.7% |
+
+![Comparison of the three split proposals](assets/phase3_5b_proposal_comparison.png)
+
+The saved Phase 3.5B audit passes its stated design gates: zero known cross-split overlap for component, speaker-group, public/raw speaker, session and exact-waveform keys; zero train-only rows held out. Validation and test include 75.6% and 67.8% November 2024 audio hours respectively, while training is 10.6% November 2024. This distribution shift should be reported, especially if month corresponds to recording conditions; it does not outweigh the severe validation and short-clip problems above for this first baseline. **Phase 3.5B is preferred but still proposed, not frozen.** The local derived manifests and audit JSON are excluded from this public source repository.
 
 ## Findings from the recovered Narration analyses
 
@@ -60,13 +100,14 @@ The local recovered notebooks retain complete originals for thesis reporting. Th
 - Raw references contain 107 distinct code points including space and are already in Unicode NFD. Repeated ordinary spaces occur in 640 references. Plain `g` and IPA `ɡ` both occur frequently. The old A_v1 and A_v2 conventions differ in 51 transcript strings; fewer unresolved flags under A_v2 do not validate its linguistic choices.
 - The audio signal audit found no decoding failures, three empty recordings and no nonempty all-zero recordings. It flagged 104 clips below −50 dBFS RMS. Those level measurements are review signals, not evidence that the speech is unusable.
 
-The next research step uses `transcript_raw`, `transcript_missing`, `audio_ok`, `audio_issue`, `duration_decoded`, and stable `sample_id`/`audio_path` fields for a derived eligibility manifest. Speaker and session fields are needed for splits. In the starting master, `transcript_normalized`, `duplicate_group_id`, and `final_split` are unfilled; no final target policy or split can be inferred from them.
+The staged work derives eligibility from `transcript_raw`, `transcript_missing`, `audio_ok`, `audio_issue`, `duration_decoded`, and stable `sample_id`/`audio_path` fields. Speaker and session fields drive the group-level proposals. In the starting master, `transcript_normalized`, `duplicate_group_id`, and `final_split` are unfilled; the source master itself does not contain a final target policy or frozen split.
 
 ## Contents
 
-- `notebooks/`: Phase 0, Phase 1 and Phase 2 notebooks with saved results, plus three adapted historical analysis notebooks with saved plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
+- `notebooks/`: Phase 0, 1, 2, 2.5, 3, 3.5 and 3.5B notebooks with saved results, plus three adapted historical analysis notebooks with saved non-audio plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
 - `src/nyishi_asr/` and `run_preprocessing.py`: historical staged reconstruction and integrity checks.
 - `scripts/prepare_narration_baseline.py`: earlier candidate-pool, duplicate-waveform and grouping analysis; its IPA-policy assumptions are not the selected minimal-normalization baseline.
+- `scripts/phase3_5b_proposal.py`: deterministic Phase 3.5B group-level split search and structural audit. It needs the local Phase 3.5 derived manifest, which is intentionally not published.
 - `tests/`: normalization, integrity, source-recovery and dataset-dependent checks.
 - `requirements.txt`: exact package versions from the existing reconstruction environment, not a model-training environment.
 
@@ -82,9 +123,9 @@ The normalization and integrity unit tests can run without dataset fixtures. Not
 
 ## Next experiment
 
-1. Implement a new minimal-cleaning workflow from original reference text, preserving IPA marks and pronunciation differences.
-2. Exclude missing-label/empty-audio examples in a derived view; retain source data.
-3. Freeze speaker/session-aware splits and one evaluation policy.
-4. Validate IPA tokenization and run an IPA-Whisper Base pilot before substantive comparisons.
+1. Review the remaining uncertain speaker/session grouping and the one repeated full-transcript prompt across proposed splits. Keep the 42 uncertain-symbol clips outside the first held-out evaluation under the documented conservative policy. Recheck that Phase 3.5B uses the intended local inputs.
+2. Freeze the selected Phase 3.5B train/validation/test membership, save versioned manifests and SHA-256 hashes, and record the final row/hour/component counts. Never revise the test split in response to model scores.
+3. In Phase 4, pin `neurlang/ipa-whisper-base` and its processor revision; check NFD IPA and combining-mark encode/decode round trips, label lengths, audio features and a batch-1 inference smoke test. Record actual GPU memory and runtime.
+4. Run an IPA-compatible zero-shot diagnostic, then a small supervised pilot using training data and validation for checkpoint choice. Evaluate the selected recipe once on the frozen test set using corpus-level NFD character error rate (CER). Compare later models on the same split and policy.
 
 Do not infer linguistic correctness, tone recognition or model superiority from code checks or candidate membership.
