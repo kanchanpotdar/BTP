@@ -12,6 +12,7 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 | Targeted label/speaker review | Conservative exclusions recorded; expert adjudication remains pending |
 | Phase 3.5B split | Accepted, frozen and hashed locally |
 | Phase 4 processor/model smoke test | **Engineering checks complete**, including corrected EOS/cap diagnostics |
+| Phase 5A validation-input preparation | **Completed and independently verified**; private bundle ready for Kaggle |
 | Zero-shot validation CER | **Next — not run** |
 | Nyishi fine-tuning and final test evaluation | **Not run** |
 
@@ -19,7 +20,7 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 
 ### Navigate
 
-[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Next steps](#next-steps-zero-shot-validation-baseline)
+[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Next steps](#next-steps-zero-shot-validation-baseline)
 
 <a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open the Phase 4 results notebook with saved figures</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full Phase 4 report</ins></a>
 
@@ -252,14 +253,40 @@ The export labels the measured run **v6**; the prepared source is **v7**, which 
 
 <a href="docs/PHASE4_RESULTS_AGGREGATE.json"><ins>Aggregate metrics</ins></a> · <a href="docs/PHASE4_SMOKE_DIAGNOSTICS.json"><ins>Anonymous plot inputs</ins></a> · <a href="scripts/render_phase4_results.py"><ins>Rebuild the five public figures</ins></a>
 
+## Phase 5A: validation-input preparation
+
+<a href="notebooks/Phase-5A-Results-Public.ipynb"><ins>Open the Phase 5A results notebook with saved figures</ins></a> · <a href="docs/PHASE5A_RESULTS.md"><ins>Read the Phase 5A report</ins></a> · <a href="docs/PHASE5A_RESULTS_AGGREGATE.json"><ins>View aggregate results</ins></a>
+
+### What was prepared and checked
+
+- A private, validation-only package contains **732 frozen validation clips** (**1.881808 hours**) across **16 existing components**, with **64,137 NFD reference code points** including spaces.
+- All **732 WAVs** decoded and matched the frozen waveform checks. There were **zero extraction errors**. The copied references and membership match the frozen validation manifest.
+- All **737 payload-file checksums** passed; the ZIP has 738 entries including the checksum list. The archive is **138.64 MiB**. Frozen manifests and all 33 source-shard hashes remained unchanged.
+- The output contains validation audio only. Stable group aliases preserve the frozen component grouping; they do not certify individual speaker identities.
+- Durations range from **0.50 to 29.99 seconds** (median **7.46 seconds**); **146 clips (19.95%)** are under three seconds. The largest component contributes **24.14%** of validation hours, and **75.59%** of hours are from November 2024. Keep these skews in later error analysis.
+
+### Figure: duration and reference length
+
+![Phase 5A validation duration and reference length](assets/phase5a/01_validation_duration_and_reference_length.png)
+
+### Figure: validation hours by anonymous component
+
+![Phase 5A validation component hours](assets/phase5a/02_validation_component_hours.png)
+
+### Figure: validation metadata coverage
+
+![Phase 5A validation metadata coverage](assets/phase5a/03_validation_metadata_coverage.png)
+
+**Interpretation:** Phase 5A confirms that the intended validation inputs were copied and packaged intact. It does not check whether the references are linguistically correct and contains no model predictions; **inference, CER scoring and training have not run**. The ZIP, source locator map and private provenance records are not published here.
+
 ## Next steps: zero-shot validation baseline
 
-1. **Prepare inputs:** hash-check the frozen validation manifest and package its **732 clips / 1.881808 hours** privately for Kaggle. Verify audio/reference alignment.
-2. **Verify scoring:** check CER on known pairs, combining marks and empty predictions. Preserve spaces, marks and every example in the denominator.
-3. **Run a small validation preflight**, then all validation clips with resumable per-sample exports and the same pinned settings.
-4. **Report corpus CER:** S/D/I, reference-character denominator, clips/hours, decode failures, EOS/cap flags, runtime and memory. Repetition and U+FFFD count as output errors; CER can exceed 100%.
-5. **Begin supervised adaptation:** use a 1–2 hour training pilot; select checkpoints by validation CER and measure training memory before expanding.
-6. **Final evaluation:** reserve the 683 test clips until the selected recipe is ready. Any decoding-policy alternative is a documented validation experiment.
+1. **Upload the Phase 5A ZIP privately to Kaggle** and verify its checksums there; keep it separate from the existing Phase 4 training-smoke dataset.
+2. **Phase 5B:** illustrate waveform and processor log-Mel features using training-smoke examples, test the CER scorer on known pairs and combining marks, then run a small validation preflight.
+3. Run the full **732-clip validation zero-shot baseline** with the pinned checkpoint/settings and resumable per-sample outputs.
+4. Report corpus CER, S/D/I, reference-character denominator, clip/hour coverage, failures, EOS/cap flags, runtime and GPU memory. Repetition and U+FFFD count as output errors; CER can exceed 100%.
+5. After reviewing B0, complete the supervised training smoke and 1–2 hour pilot; measure training memory before expanding.
+6. Reserve the **683 test clips** until the selected recipe is ready. Any decoding-policy alternative is a documented validation experiment.
 
 No further general cleaning or split search is required to begin the baseline. Save the executed Kaggle notebook locally for provenance when available.
 
@@ -289,10 +316,11 @@ The local recovered notebooks preserve original analyses and outputs for thesis 
 |---|---|
 | `notebooks/Phase-0.ipynb` through `Phase-3.5B.ipynb` | Historical staged analyses and saved results |
 | `notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb` | Current Kaggle engineering code |
-| `notebooks/Phase-4B-Results-Public.ipynb` | Public report with saved figures derived from the reviewed export |
-| `docs/PHASE4_RESULTS.md` | Full results, provenance, limitations and next actions |
+| `notebooks/Phase-4B-Results-Public.ipynb`, `notebooks/Phase-5A-Results-Public.ipynb` | Public report notebooks with saved figures and privacy-safe aggregate results |
+| `docs/PHASE4_RESULTS.md`, `docs/PHASE5A_RESULTS.md` | Phase reports, provenance, limitations and next actions |
 | `docs/PHASE4_RESULTS_AGGREGATE.json` | Machine-readable engineering findings |
-| `assets/phase4/` | Five current public plots, with anonymous example positions |
+| `docs/PHASE5A_RESULTS_AGGREGATE.json` | Machine-readable bundle verification and coverage results |
+| `assets/phase4/`, `assets/phase5a/` | Public plots; no audio is embedded |
 | `scripts/render_phase4_results.py` | Rebuild plots from public numeric diagnostics |
 | `scripts/phase3_5b_proposal.py` | Historical deterministic split search; private inputs required |
 | `src/nyishi_asr/`, `run_preprocessing.py` | Historical reconstruction/integrity code |

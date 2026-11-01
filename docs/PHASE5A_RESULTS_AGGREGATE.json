@@ -1,0 +1,53 @@
+{
+  "phase": "5A_validation_bundle_preparation",
+  "status": "completed_and_independently_verified",
+  "split_version": "phase3_5b_v1",
+  "validation_clips": 732,
+  "validation_hours": 1.8818083506944443,
+  "validation_components": 16,
+  "reference_codepoints_nfd_including_spaces": 64137,
+  "decoded_audio_verified": 732,
+  "extraction_errors": 0,
+  "source_shards_unchanged_verified": 33,
+  "frozen_manifests_unchanged": true,
+  "membership_references_and_waveform_hashes_match_frozen_validation": true,
+  "payload_hashes_verified": 737,
+  "zip_entries_including_checksum_list": 738,
+  "private_zip_size_bytes": 145378360,
+  "private_zip_sha256": "2a7cb19aac3707488733b9af8bd70b694f969583e1fbe03de2a9f39466954f52",
+  "duration_seconds": {
+    "minimum": 0.5,
+    "q1": 3.6775,
+    "median": 7.46,
+    "q3": 13.645,
+    "maximum": 29.99,
+    "clips_under_3_seconds": 146,
+    "clips_under_3_seconds_percent": 19.94535519125683
+  },
+  "largest_component_audio_share_percent": 24.135178004247006,
+  "audio_hours_by_gender": {
+    "female": 0.9574083333333333,
+    "male": 0.87176390625,
+    "unknown": 0.05263611111111111
+  },
+  "audio_hours_by_age_group": {
+    "30-45": 0.8274222395833334,
+    "18-30": 0.6498166666666667,
+    "45-60": 0.4045694444444445
+  },
+  "audio_hours_by_recording_month": {
+    "2024-11": 1.4224555555555556,
+    "2025-04": 0.44569168402777776,
+    "2025-06": 0.013661111111111112
+  },
+  "contains_train_or_test_audio": false,
+  "source_locator_map_published": false,
+  "inference_run": false,
+  "cer_computed": false,
+  "training_run": false,
+  "limitations": [
+    "Component aliases are grouping labels, not expert-verified speaker identities.",
+    "Validation coverage is uneven by component and recording month.",
+    "Integrity checks do not establish transcript correctness or model accuracy."
+  ]
+}
