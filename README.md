@@ -6,23 +6,6 @@ Source code and analysis notebooks with saved plots and tables for a Nyishi IPA 
 
 The Phase 3.5B split was accepted, frozen and hashed locally on 1 November 2026. **Phase 4 core engineering checks passed on Kaggle's Tesla T4.** A stopping-diagnostic correction still needs a small verification run. No Nyishi fine-tuning or validation/test CER has been completed. Raw/derived datasets and private predictions remain local.
 
-## Phase 4: processor and model smoke test
-
-The measured run verified tokenizer round trips on **5,044 frozen + 42 set-aside labels**, audio/features on **12 training-only clips**, repeated first-clip generation and checkpoint save/reload. Loaded/installed Transformers both report **4.57.1**. Batch-1 FP32 generation took **18.82 seconds** in the measured loop; peak PyTorch allocated/reserved GPU memory was **339.26 / 362 MiB**. These are inference measurements, not training requirements.
-
-Predictions exhibit substantial omissions and repetition. Six returned content sequences contain 445 tokens; the earlier zero EOS/cap flags were a measurement bug because Whisper's default tensor strips prefix/EOS. The corrected **v6 source is prepared but not yet run**. Preserve these poor outputs in later evaluation; no CER has been computed.
-
-- [Corrected Kaggle notebook](notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb)
-- [Results notebook with saved aggregate figures](notebooks/Phase-4B-Results-Public.ipynb)
-- [Detailed results, limitations and next actions](docs/PHASE4_RESULTS.md)
-- [Machine-readable aggregate metrics](docs/PHASE4_RESULTS_AGGREGATE.json)
-
-![Phase 4 content lengths and repetition](assets/phase4/output_lengths_repetition.png)
-
-![Phase 4 inference memory](assets/phase4/inference_memory.png)
-
-Next: verify the corrected full-sequence stopping diagnostics on the same training clips, then establish corpus-level NFD code-point CER on the **732 frozen validation clips**. Keep test reserved for final evaluation. No additional split search or IPA mark removal is required.
-
 ## Phase 0: local inventory
 
 The [Phase 0 notebook](notebooks/Phase-0.ipynb) records the 31 October 2026 local environment and data inventory, with its saved cell outputs. All required local inputs were found. The 59 Narration Parquet shards and the starting `master_A_v1_1.parquet` each contain 6,718 rows; the master has 54 columns. The local Python 3.11.1 environment had NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. PyTorch and the model-training packages were not installed there. At Phase 0, Kaggle compute was unmeasured; Phase 4 now records a Tesla T4 and inference memory, while quota remains unrecorded.
@@ -106,6 +89,23 @@ The [Phase 3.5B notebook](notebooks/Phase-3.5B.ipynb) and its [deterministic pro
 ![Comparison of the three split proposals](assets/phase3_5b_proposal_comparison.png)
 
 The saved Phase 3.5B audit passes its stated design gates: zero known cross-split overlap for component, speaker-group, public/raw speaker, session and exact-waveform keys; zero train-only rows held out. Validation and test include 75.6% and 67.8% November 2024 audio hours respectively, while training is 10.6% November 2024. This distribution shift should be reported, especially if month corresponds to recording conditions; it does not outweigh the severe validation and short-clip problems above for this first baseline. **Historical proposal status: Phase 3.5B was subsequently accepted and frozen locally on 1 November 2026; see current Status above.** The local derived manifests and audit JSON are excluded from this public source repository.
+
+## Phase 4: processor and model smoke test
+
+The measured run verified tokenizer round trips on **5,044 frozen + 42 set-aside labels**, audio/features on **12 training-only clips**, repeated first-clip generation and checkpoint save/reload. Loaded/installed Transformers both report **4.57.1**. Batch-1 FP32 generation took **18.82 seconds** in the measured loop; peak PyTorch allocated/reserved GPU memory was **339.26 / 362 MiB**. These are inference measurements, not training requirements.
+
+Predictions exhibit substantial omissions and repetition. Six returned content sequences contain 445 tokens; the earlier zero EOS/cap flags were a measurement bug because Whisper's default tensor strips prefix/EOS. The corrected **v6 source is prepared but not yet run**. Preserve these poor outputs in later evaluation; no CER has been computed.
+
+- [Corrected Kaggle notebook](notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb)
+- [Results notebook with saved aggregate figures](notebooks/Phase-4B-Results-Public.ipynb)
+- [Detailed results, limitations and next actions](docs/PHASE4_RESULTS.md)
+- [Machine-readable aggregate metrics](docs/PHASE4_RESULTS_AGGREGATE.json)
+
+![Phase 4 content lengths and repetition](assets/phase4/output_lengths_repetition.png)
+
+![Phase 4 inference memory](assets/phase4/inference_memory.png)
+
+Next: verify the corrected full-sequence stopping diagnostics on the same training clips, then establish corpus-level NFD code-point CER on the **732 frozen validation clips**. Keep test reserved for final evaluation. No additional split search or IPA mark removal is required.
 
 ## Findings from the recovered Narration analyses
 
