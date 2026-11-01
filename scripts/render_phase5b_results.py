@@ -68,5 +68,35 @@ def render(root):
     plt.close(fig)
 
 
+    rows = data["stopping_breakdown"]
+    assert sum(r["clips"] for r in rows) == 732
+    fig, ax = plt.subplots(figsize=(10, 5), constrained_layout=True)
+    values = [100*r["cer"] for r in rows]
+    ax.bar([f"{r['group']}\n(n={r['clips']}, ref={r['reference_codepoints']:,})" for r in rows], values, color=["#59a14f", "#e15759"])
+    for i,value in enumerate(values): ax.text(i,value+2,f"{value:.1f}%",ha="center")
+    ax.set_ylim(0,max(values)*1.18)
+    ax.set_ylabel("Corpus code-point CER (%)")
+    ax.axhline(100,color="#888",linestyle="--",linewidth=1)
+    ax.set_title(title + "\nStopping outcome is observational; this is not a cap intervention")
+    fig.savefig(target / "05_cer_by_stopping.png", dpi=160)
+    plt.close(fig)
+    rows = data["generated_token_length_histogram"]
+    assert sum(r["clips"] for r in rows) == 732
+    fig, ax = plt.subplots(figsize=(11, 5), constrained_layout=True)
+    cap = [r["cap_without_eos_clips"] for r in rows]
+    other = [r["clips"]-r["cap_without_eos_clips"] for r in rows]
+    ax.bar([r["group"] for r in rows],other,color="#4c78a8",label="EOS terminated")
+    ax.bar([r["group"] for r in rows],cap,bottom=other,color="#e15759",label="Cap without EOS")
+    for i,r in enumerate(rows): ax.text(i,r["clips"]+2,str(r["clips"]),ha="center")
+    ax.set_ylim(0,max(r["clips"] for r in rows)*1.2)
+    ax.set_ylabel("Clips")
+    ax.set_xlabel("Full generated token count, including prefix/EOS (unequal-width bins)")
+    ax.tick_params(axis="x",rotation=20)
+    ax.set_title(title)
+    ax.legend()
+    fig.savefig(target / "06_generation_length_distribution.png", dpi=160)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     render(Path(__file__).resolve().parents[1])

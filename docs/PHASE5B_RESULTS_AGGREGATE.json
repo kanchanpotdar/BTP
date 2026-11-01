@@ -219,5 +219,76 @@
       "edits": 271,
       "cer": 1.5941176470588236
     }
-  ]
+  ],
+  "stopping_breakdown": [
+    {
+      "group": "EOS terminated",
+      "clips": 602,
+      "reference_codepoints": 41456,
+      "edits": 31265,
+      "cer": 0.7541730991895021
+    },
+    {
+      "group": "448-token cap without EOS",
+      "clips": 130,
+      "reference_codepoints": 22681,
+      "edits": 34879,
+      "cer": 1.5378069750011023
+    }
+  ],
+  "generated_token_length_histogram": [
+    {
+      "group": "(0, 64]",
+      "clips": 258,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(64, 128]",
+      "clips": 180,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(128, 192]",
+      "clips": 100,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(192, 256]",
+      "clips": 33,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(256, 320]",
+      "clips": 22,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(320, 384]",
+      "clips": 6,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(384, 447]",
+      "clips": 3,
+      "cap_without_eos_clips": 0
+    },
+    {
+      "group": "(447, 448]",
+      "clips": 130,
+      "cap_without_eos_clips": 130
+    }
+  ],
+  "executed_notebook_checks": {
+    "737_payload_checks_passed": true,
+    "scorer_self_checks_passed": true,
+    "model_parameters_fp32": true,
+    "full_continuation_completed": true,
+    "saved_full_coverage": true,
+    "two_finite_processor_examples": true
+  },
+  "python_version": "3.13.15",
+  "tokenizers_version": "0.22.2",
+  "huggingface_hub_version": "0.36.2",
+  "numpy_version": "2.1.3",
+  "soundfile_version": "0.14.0"
 }

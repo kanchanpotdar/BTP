@@ -80,7 +80,7 @@ assert score_text_pair("abc", "")["D"] == 3  # Empty predictions remain deletion
 assert normalize_reference_or_hypothesis("  a   b  ") == "a b"
 print("CER self-checks passed. IPA marks are not stripped; only NFD and repeated ordinary spaces are normalized.")
 
-def audit(private_zip, bundle_manifest, frozen_manifest):
+def audit(private_zip, bundle_manifest, frozen_manifest, executed_notebook=None):
     with zipfile.ZipFile(private_zip) as z:
         def read(tail):
             matches = [n for n in z.namelist() if n.endswith("/" + tail)]
@@ -192,6 +192,42 @@ def audit(private_zip, bundle_manifest, frozen_manifest):
         assert sum(r["clips"] for r in data[key]) == 732
         assert sum(r["reference_codepoints"] for r in data[key]) == denominator
         assert sum(r["edits"] for r in data[key]) == s+d+i
+    data["stopping_breakdown"] = [
+        aggregate([r for r in rows if r["eos_terminated"]], "EOS terminated"),
+        aggregate([r for r in rows if r["hit_448_token_cap_without_eos"]], "448-token cap without EOS"),
+    ]
+    assert sum(r["clips"] for r in data["stopping_breakdown"]) == 732
+    assert sum(r["reference_codepoints"] for r in data["stopping_breakdown"]) == denominator
+    assert sum(r["edits"] for r in data["stopping_breakdown"]) == s+d+i
+    token_bands = [(0,64),(64,128),(128,192),(192,256),(256,320),(320,384),(384,447),(447,448)]
+    data["generated_token_length_histogram"] = [
+        {"group": f"({low}, {high}]", "clips": sum(low < r["generated_token_count_including_prefix"] <= high for r in rows),
+         "cap_without_eos_clips": sum(low < r["generated_token_count_including_prefix"] <= high and r["hit_448_token_cap_without_eos"] for r in rows)}
+        for low,high in token_bands
+    ]
+    assert sum(r["clips"] for r in data["generated_token_length_histogram"]) == 732
+    assert sum(r["cap_without_eos_clips"] for r in data["generated_token_length_histogram"]) == data["hit_448_token_cap_without_eos"]
+    if executed_notebook is not None:
+        notebook = json.loads(Path(executed_notebook).read_text())
+        output_text = "\n".join("".join(o.get("text", [])) for c in notebook["cells"] for o in c.get("outputs", []) if o["output_type"] == "stream")
+        assert config["run_fingerprint"] in output_text
+        checks = {
+            "737_payload_checks_passed": "737 hashes; 732 validation rows" in output_text,
+            "scorer_self_checks_passed": "CER self-checks passed" in output_text,
+            "model_parameters_fp32": "Model parameters are FP32: True" in output_text,
+            "full_continuation_completed": "Processed 720/720" in output_text,
+            "saved_full_coverage": "Full B0 validation baseline complete: True" in output_text,
+            "two_finite_processor_examples": output_text.count("feature shape=(1, 80, 3000), dtype=torch.float32, finite=True") == 2,
+        }
+        assert all(checks.values())
+        data["executed_notebook_checks"] = checks
+        data["python_version"] = "3.13.15"
+        data["tokenizers_version"] = "0.22.2"
+        data["huggingface_hub_version"] = "0.36.2"
+        data["numpy_version"] = "2.1.3"
+        data["soundfile_version"] = "0.14.0"
+        for name, key in [("Python", "python_version"), ("Tokenizers", "tokenizers_version"), ("Hugging Face Hub", "huggingface_hub_version"), ("NumPy", "numpy_version"), ("SoundFile", "soundfile_version")]:
+            assert f"{name}: {data[key]}" in output_text
     return data
 
 
@@ -201,8 +237,9 @@ if __name__ == "__main__":
     parser.add_argument("--bundle-manifest", required=True, type=Path)
     parser.add_argument("--frozen-manifest", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path, help="Aggregate JSON destination")
+    parser.add_argument("--executed-notebook", type=Path, help="Optional private executed notebook to cross-check runtime and gate outputs")
     args = parser.parse_args()
-    data = audit(args.private_zip, args.bundle_manifest, args.frozen_manifest)
+    data = audit(args.private_zip, args.bundle_manifest, args.frozen_manifest, args.executed_notebook)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(data, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     print("Verified 732/732 frozen validation clips; wrote privacy-safe aggregate JSON.")

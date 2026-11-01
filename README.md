@@ -12,11 +12,11 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 | Targeted label/speaker review | Conservative exclusions recorded; expert adjudication remains pending |
 | Phase 3.5B split | Accepted, frozen and hashed locally |
 | Phase 4 processor/model smoke test | **Engineering checks complete**, including corrected EOS/cap diagnostics |
-| Phase 5A validation-input preparation | **Completed and independently verified**; private bundle ready for Kaggle |
+| Phase 5A validation-input preparation | **Completed and independently verified**; private bundle verified and used for B0 |
 | Phase 5B B0 validation CER | **732/732 scored; 103.13% CER; reporting corrected** |
 | Nyishi fine-tuning and final test evaluation | **Not run** |
 
-**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and four plots were regenerated from saved predictions without model inference. The supplied export lacks the separate processor illustrations and an executed notebook, so those ancillary evidence checks remain open.
+**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and six full-validation plots were regenerated from saved predictions without model inference. The supplied executed notebook confirms the processor/scorer/runtime gates; four anonymous processor illustrations are now included.
 
 ### Navigate
 
@@ -309,7 +309,7 @@ Per-clip time includes processing/decoding work, excludes model loading and repo
 
 ### Reporting correction
 
-The original export's CER/edit totals were correct, but its plots, mean runtime and last-pass telemetry still described the **12-clip preflight**. The save cell now reloads saved predictions and pass telemetry and regenerates every metric and all four validation plots. A regression check reproduced a stale preflight report followed by a full result and verified that running the save cell alone repairs the export. **No inference was rerun.** The four public plots each summarize all 732 clips; subgroup totals recover the full denominator/edit count. The review prose's earlier memory values mixed MB and MiB; the corrected figures above use byte telemetry.
+The original export's CER/edit totals were correct, but its plots, mean runtime and last-pass telemetry still described the **12-clip preflight**. The save cell now reloads saved predictions and pass telemetry and regenerates every metric and all six validation plots. A regression check reproduced a stale preflight report followed by a full result and verified that running the save cell alone repairs the export. **No inference was rerun.** The six validation plots each summarize all 732 clips; subgroup totals recover the full denominator/edit count. The review prose's earlier memory values mixed MB and MiB; the corrected figures above use byte telemetry.
 
 ### Figures and interpretation
 
@@ -329,12 +329,34 @@ Substitutions contribute **55.6%** of edits, insertions **38.1%**, deletions **6
 
 The 130 cap hits and 52 U+FFFD outputs remain in CER. Unicode flags can overlap stopping flags. Their presence motivates private error analysis; changing decoding or removing labels cannot be assumed to improve recognition.
 
-**Completion scope:** the full B0 validation measurement and corrected aggregate publication are complete. The supplied ZIP omits the training-only processor figures saved outside its result folder; the local source notebook has no saved execution outputs. Those illustration/executed-notebook checks remain unverified. Public results are derived from saved predictions and do not claim that the full notebook checklist was witnessed.
+![Phase 5B CER by stopping outcome, all 732 clips](assets/phase5b/05_cer_by_stopping.png)
+
+The 130 cap-limited outputs have **153.8% CER**, compared with **75.4%** for the 602 EOS-terminated outputs. This is an association between observed outcomes; it does not establish that increasing the cap would improve accuracy.
+
+![Phase 5B generated-token distribution, all 732 clips](assets/phase5b/06_generation_length_distribution.png)
+
+Counts include the prefix/EOS and sum to 732. The last bin isolates the 130 outputs at the 448-token cap without EOS. Unequal-width bins show counts, not a probability density.
+
+### Processor illustrations: training-only examples
+
+The executed notebook contains four processor figures and finite FP32 `[1,80,3000]` checks for short (0.750 s) and long (28.820 s) training-smoke audio. For publication these figures were recreated from the same hash-checked private WAVs using the pinned **Transformers 4.57.1 NumPy CPU feature extractor** and anonymous labels. No model weights were loaded and no inference was run. This is a fresh processor calculation; bitwise equality to the saved Kaggle tensors is not claimed.
+
+![Short training example, waveform and full padded features](assets/phase5b/processor_short_full.png)
+
+![Short training example, feature close view](assets/phase5b/processor_short_zoom.png)
+
+![Long training example, waveform and full padded features](assets/phase5b/processor_long_full.png)
+
+![Long training example, feature close view](assets/phase5b/processor_long_zoom.png)
+
+The 30-second window includes zero padding after real audio ends; the close views make the real-audio features readable. Colors are scaled log-Mel values, not calibrated dB. FFT windows overlap near the boundary. These are **two training illustrations**, separate from the six plots covering all 732 validation clips; they do not establish audio/reference alignment or recognition quality.
+
+**Completion scope:** Phase 5B is complete for the declared processor/scorer checks and full B0 validation measurement. The executed notebook verifies all 737 payload checksums, the scorer checks, processor shapes/finiteness, FP32 model parameters and full validation completion. Its old preflight report is superseded by the corrected results here. The original executed notebook remains private; the public source is corrected and outputs cleared, and the public report notebook contains all ten safe figures.
 
 ## Next steps: supervised training smoke and pilot
 
 1. Keep B0, frozen membership and scoring fixed. Privately review high/low-CER, capped and U+FFFD outputs against audio/references; record error categories and uncertainty without deleting difficult examples or rewriting labels to improve scores.
-2. Retain the executed Kaggle notebook and separate training-only processor illustrations when available; B0 inference need not be rerun for reporting.
+2. Preserve the original executed notebook privately. Use the corrected full-set reports and anonymous processor figures; B0 inference need not be rerun for reporting.
 3. Specify the supervised decoder-prefix, target-shift and padding-mask policy without inventing a Nyishi token. Any decoding alternative is a separately declared validation experiment.
 4. **Phase 6A:** check finite FP16-AMP loss/gradients, a real optimizer update and full checkpoint/resume state. **Phase 6B:** then run the planned component-aware 1–2 hour pilot, measure training memory/speed, and select checkpoints by validation CER.
 5. Only after stable pilot evidence, proceed to planned full fine-tuning and matched LoRA comparisons. Reserve the **683 frozen test clips** for final evaluation of the selected configuration.
@@ -372,9 +394,10 @@ The local recovered notebooks preserve original analyses and outputs for thesis 
 | `docs/PHASE4_RESULTS_AGGREGATE.json` | Machine-readable engineering findings |
 | `docs/PHASE5A_RESULTS_AGGREGATE.json` | Machine-readable bundle verification and coverage results |
 | `notebooks/Phase-5B-Zero-Shot-Validation.ipynb` | Corrected inference/reporting source; private inputs required, outputs cleared |
-| `notebooks/Phase-5B-Results-Public.ipynb` | Saved aggregate summary and all four full-validation plots |
+| `notebooks/Phase-5B-Results-Public.ipynb` | Saved aggregate summary and six full-validation plots and four processor illustrations |
 | `docs/PHASE5B_RESULTS.md`, `docs/PHASE5B_RESULTS_AGGREGATE.json` | Verified B0 method, results, limitations and public numeric plot inputs |
 | `assets/phase5b/`, `scripts/render_phase5b_results.py` | Full-validation plots and renderer using public aggregates only |
+| `scripts/render_phase5b_processor.py`, `docs/PHASE5B_PROCESSOR_ILLUSTRATIONS.json` | Recreate anonymous processor figures from private training smoke inputs; no model inference |
 | `scripts/audit_phase5b_saved_results.py` | Recompute metrics from authorized private saved predictions; no inference |
 | `assets/phase4/`, `assets/phase5a/` | Public plots; no audio is embedded |
 | `scripts/render_phase4_results.py` | Rebuild plots from public numeric diagnostics |

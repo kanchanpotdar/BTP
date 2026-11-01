@@ -1,0 +1,41 @@
+{
+  "scope": "two training-only smoke illustrations; not validation plots",
+  "transformers_version": "4.57.1",
+  "numpy_version": "2.3.5",
+  "backend": "NumPy CPU; no model weights or inference",
+  "sampling_rate": 16000,
+  "mel_bins": 80,
+  "n_fft": 400,
+  "hop_length": 160,
+  "input_window_seconds": 30,
+  "model_revision": "949f7c4e4ee374b5202bc5886f6e4552e5ae2371",
+  "bitwise_equality_to_saved_kaggle_tensors_claimed": false,
+  "examples": [
+    {
+      "example": "short",
+      "duration_seconds": 0.75,
+      "frames": 12000,
+      "feature_shape": [
+        1,
+        80,
+        3000
+      ],
+      "feature_dtype": "float32",
+      "finite": true,
+      "padding_seconds": 29.25
+    },
+    {
+      "example": "long",
+      "duration_seconds": 28.82,
+      "frames": 461120,
+      "feature_shape": [
+        1,
+        80,
+        3000
+      ],
+      "feature_dtype": "float32",
+      "finite": true,
+      "padding_seconds": 1.1799999999999997
+    }
+  ]
+}
