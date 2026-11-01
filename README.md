@@ -14,13 +14,15 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 | Phase 4 processor/model smoke test | **Engineering checks complete**, including corrected EOS/cap diagnostics |
 | Phase 5A validation-input preparation | **Completed and independently verified**; private bundle verified and used for B0 |
 | Phase 5B B0 validation CER | **732/732 scored; 103.13% CER; reporting corrected** |
-| Nyishi fine-tuning and final test evaluation | **Not run** |
+| Phase 6A training smoke | **Passed** on eight frozen-train clips: two verified optimizer updates across save/reload; no CER |
+| Phase 6B P1 pilot | **Prepared, not run**: 581 train clips / 1.002867 h; full 732-clip validation planned |
+| Full Nyishi fine-tuning and final test evaluation | **Not run** |
 
-**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and six full-validation plots were regenerated from saved predictions without model inference. The supplied executed notebook confirms the processor/scorer/runtime gates; four anonymous processor illustrations are now included.
+**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and six full-validation plots were regenerated from saved predictions without model inference. The supplied executed notebook confirms the processor/scorer/runtime gates; four anonymous processor illustrations are now included. Phase 6A has since passed its training engineering gate, while the Phase 6B accuracy pilot remains unrun.
 
 ### Navigate
 
-[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Phase 5B](#phase-5b-b0-full-validation-zero-shot-baseline) · [Next steps](#next-steps-supervised-training-smoke-and-pilot)
+[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Phase 5B](#phase-5b-b0-full-validation-zero-shot-baseline) · [Phase 6A](#phase-6a-supervised-training-smoke) · [Phase 6B](#phase-6b-controlled-p1-pilot-prepared) · [Next steps](#next-steps-after-the-pilot)
 
 <a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open the Phase 4 results notebook with saved figures</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full Phase 4 report</ins></a>
 
@@ -353,15 +355,34 @@ The 30-second window includes zero padding after real audio ends; the close view
 
 **Completion scope:** Phase 5B is complete for the declared processor/scorer checks and full B0 validation measurement. The executed notebook verifies all 737 payload checksums, the scorer checks, processor shapes/finiteness, FP32 model parameters and full validation completion. Its old preflight report is superseded by the corrected results here. The original executed notebook remains private; the public source is corrected and outputs cleared, and the public report notebook contains all ten safe figures.
 
-## Next steps: supervised training smoke and pilot
+## Phase 6A: supervised training smoke
 
-1. Keep B0, frozen membership and scoring fixed. Privately review high/low-CER, capped and U+FFFD outputs against audio/references; record error categories and uncertainty without deleting difficult examples or rewriting labels to improve scores.
-2. Preserve the original executed notebook privately. Use the corrected full-set reports and anonymous processor figures; B0 inference need not be rerun for reporting.
-3. Specify the supervised decoder-prefix, target-shift and padding-mask policy without inventing a Nyishi token. Any decoding alternative is a separately declared validation experiment.
-4. **Phase 6A:** check finite FP16-AMP loss/gradients, a real optimizer update and full checkpoint/resume state. **Phase 6B:** then run the planned component-aware 1–2 hour pilot, measure training memory/speed, and select checkpoints by validation CER.
-5. Only after stable pilot evidence, proceed to planned full fine-tuning and matched LoRA comparisons. Reserve the **683 frozen test clips** for final evaluation of the selected configuration.
+The [source notebook](notebooks/Phase-6A-Kaggle-Training-Smoke.ipynb) and [Kaggle instructions](docs/PHASE6A_KAGGLE_RUN.md) check the Phase 6A training path on **eight distinct frozen-training clips**. The supplied private Kaggle export and executed notebook were reviewed; the [aggregate results](docs/PHASE6A_RESULTS.md) and [JSON](docs/PHASE6A_RESULTS_AGGREGATE.json) contain the privacy-safe findings.
 
-These are recommendations from the existing sprint plan; supervised improvement and training resource requirements remain unmeasured. Retain unresolved label/identity uncertainty, month shift, prompt overlap and lack of expert Nyishi adjudication.
+| Measured gate | Result |
+|---|---:|
+| Training clips / optimizer updates | 8 / 2 (the second after checkpoint reload) |
+| Target lengths including EOS | 6–164 tokens; EOS and padding mask checked |
+| First / resumed maximum probed weight change | ~1.003e-5 / ~1.004e-5 |
+| First / resumed measured update loop | 0.618 s / 0.439 s |
+| First / resumed peak allocated GPU memory | 1,955 / 3,035 MiB |
+| Validation CER / test | Not computed / untouched |
+
+The FP16 AMP forward/backward, finite gradients, actual weight changes and save/reload of optimizer, scheduler, scaler and RNG state passed. Both updates reused the same eight clips, so lower second-pass loss is **not evidence of generalization**. These timings exclude setup, model load and checkpoint I/O. The saved model generation default differs from B0's explicit unforced decoding; Phase 6B must override that default for comparable validation CER. The executed notebook, training-state ZIP and weights remain private.
+
+## Phase 6B: controlled P1 pilot prepared
+
+The [pilot notebook](notebooks/Phase-6B-Kaggle-Pilot.ipynb), [private-bundle builder](scripts/prepare_phase6b_pilot.py) and [Kaggle run guide](docs/PHASE6B_KAGGLE_RUN.md) are prepared; **no Phase 6B training or CER result exists yet**. The deterministic nested pilot subset contains **581 full frozen-train clips / 1.002867 hours / all 15 training components**. It is checked against the private frozen manifest and hashed source WAVs. The existing B0 validation bundle supplies **all 732 clips / 1.881808 hours / 64,137 reference code points**; the test set is excluded.
+
+The declared pilot begins independently from pinned `neurlang/ipa-whisper-base`, uses FP16 AMP training with a provisional three-epoch maximum, evaluates each epoch in FP32 under B0's exact greedy decoding/text policy, and saves resumable checkpoints. Select the minimum full-validation corpus CER, then inspect errors and measured runtime/memory before deciding on the full 10.851637-hour F1 run. No improvement or GPU runtime is claimed in advance.
+
+## Next steps: after the pilot
+
+1. Upload the two **private** ZIPs named in the Phase 6B guide to Kaggle and run the hash/target preflight, then the pilot. Keep predictions, transcripts, IDs, audio, manifests and weights outside GitHub.
+2. Review the full-validation CER curve, S/D/I counts, decode failures, capped outputs and a small private sample of errors against B0's 103.13% CER. Preserve label uncertainty and difficult examples.
+3. If the recipe and resource cost are stable, run F1 on all **3,629 train clips / 10.851637 h** from the original pinned pretrained checkpoint, then the matched LoRA comparison. Reserve **683 frozen test clips** for final evaluation after validation selection.
+
+Unresolved label/identity uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication remain limitations.
 
 ## Historical Narration findings
 
@@ -395,6 +416,8 @@ The local recovered notebooks preserve original analyses and outputs for thesis 
 | `docs/PHASE5A_RESULTS_AGGREGATE.json` | Machine-readable bundle verification and coverage results |
 | `notebooks/Phase-5B-Zero-Shot-Validation.ipynb` | Corrected inference/reporting source; private inputs required, outputs cleared |
 | `notebooks/Phase-5B-Results-Public.ipynb` | Saved aggregate summary and six full-validation plots and four processor illustrations |
+| `notebooks/Phase-6A-Kaggle-Training-Smoke.ipynb`, `docs/PHASE6A_RESULTS.md` | Training-smoke source and verified aggregate review; no private checkpoint |
+| `notebooks/Phase-6B-Kaggle-Pilot.ipynb`, `docs/PHASE6B_KAGGLE_RUN.md` | Prepared P1 source and private Kaggle upload/run instructions |
 | `docs/PHASE5B_RESULTS.md`, `docs/PHASE5B_RESULTS_AGGREGATE.json` | Verified B0 method, results, limitations and public numeric plot inputs |
 | `assets/phase5b/`, `scripts/render_phase5b_results.py` | Full-validation plots and renderer using public aggregates only |
 | `scripts/render_phase5b_processor.py`, `docs/PHASE5B_PROCESSOR_ILLUSTRATIONS.json` | Recreate anonymous processor figures from private training smoke inputs; no model inference |

@@ -1,6 +1,6 @@
 # Narration: next steps
 
-Updated 1 November 2026 after Phase 5B B0 saved-result verification.
+Updated 1 November 2026 after verification of the Phase 6A Kaggle export and preparation of the Phase 6B pilot.
 
 ## Completed evidence
 
@@ -10,13 +10,14 @@ Updated 1 November 2026 after Phase 5B B0 saved-result verification.
 - Stale preflight plots/runtime fields were corrected from saved predictions without model inference. All six validation plots cover 732 clips; four separate processor illustrations use two training-only examples. See [Phase 5B results](PHASE5B_RESULTS.md).
 - The supplied executed notebook confirms checksum/scorer/FP32/processor gates and full B0 completion. Its four processor figures were recreated anonymously from hash-checked training WAVs, without model weights or inference. Phase 5B is complete for its declared scope.
 
-## Next: supervised training smoke and pilot
+- **Phase 6A training smoke passed:** eight frozen-train clips, two actual FP16 AMP optimizer updates including checkpoint/resume, finite gradients, nonzero weight changes, and saved optimizer/scheduler/scaler/RNG state. No validation CER was measured. See [aggregate Phase 6A results](PHASE6A_RESULTS.md).
+- **Phase 6B is prepared, not run:** fixed 581-clip / 1.002867-hour train subset across all 15 training components, source notebook and [private Kaggle run guide](PHASE6B_KAGGLE_RUN.md). All 732 validation clips remain the evaluation set; test remains sealed.
 
-1. Keep the B0 checkpoint/configuration, frozen membership and scoring fixed. Review selected high/low-CER, capped and Unicode-error outputs privately against audio and references, preserving label uncertainty.
-2. Preserve the supplied executed notebook privately and use the corrected anonymous publication figures. Private references, predictions, audio, manifests, IDs and source provenance remain excluded from publication.
-3. Before Phase 6A, specify decoder-prefix, label shifting and padding-mask policy without inventing a Nyishi token. Any changed decoding policy is a separate declared validation experiment.
-4. Complete Phase 6A: finite FP16-AMP loss and gradients, a verified optimizer update, and checkpoint/resume including optimizer/scaler state. These checks are not run yet.
-5. Then run a component-aware 1–2 hour Phase 6B training pilot, select by validation CER and measure training speed/memory. Full fine-tuning and matched LoRA follow only after a stable pilot; improvement and resource fit remain unmeasured.
-6. Keep all 683 test clips untouched until final selection. Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication.
+## Next: controlled pilot
 
-See the local sprint plan for provisional training settings and [the protocol](PHASE4_ZERO_SHOT_PROTOCOL.md) for the evaluation contract. No Nyishi training or final test evaluation has run.
+1. Upload the private Phase 6B train ZIP and existing private Phase 5A validation ZIP to Kaggle as two private datasets. Follow the guide's hash, label, model and policy checks.
+2. Train from pinned pretrained Base using the declared pilot recipe; evaluate every epoch on full validation in FP32 with the B0 greedy generation policy. The Phase 6A saved default forced-decoder configuration must not silently change validation decoding.
+3. Select by corpus CER, report S/D/I and all denominators, inspect private error samples, and measure complete runtime and memory. Do not infer pilot performance from training loss alone.
+4. If stable, start F1 independently on all 3,629 frozen training clips, then compare LoRA as planned. Keep the 683 test clips untouched until final selection.
+
+Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. No Phase 6B, F1, LoRA or final-test result has been measured.

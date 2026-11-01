@@ -1,0 +1,23 @@
+{
+  "phase": "6A",
+  "review_status": "core_training_gate_passed",
+  "clips": 8,
+  "micro_batch": 2,
+  "accumulation": 4,
+  "optimizer_updates": 2,
+  "first_amp_attempts": 1,
+  "resume_amp_attempts": 1,
+  "first_weight_max_change": 1.0028481483459473e-05,
+  "resume_weight_max_change": 1.004338264465332e-05,
+  "first_update_seconds": 0.6178153220000695,
+  "resume_update_seconds": 0.4386087770000131,
+  "first_peak_allocated_mib": 1955.2587890625,
+  "resume_peak_allocated_mib": 3034.8720703125,
+  "zip_crc_passed": true,
+  "frozen_train_bundle_hash_match": true,
+  "executed_core_source_match": true,
+  "validation_cer_computed": false,
+  "test_used": false,
+  "pre_pilot_issue": "saved generation_config forced_decoder_ids differs from B0 explicit unforced evaluation config",
+  "recommendation": "Phase 6B subset and evaluation policy preflight, then controlled pilot"
+}
