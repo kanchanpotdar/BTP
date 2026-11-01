@@ -1,0 +1,223 @@
+{
+  "experiment_id": "B0",
+  "status": "complete",
+  "scope": "full_validation",
+  "model_id": "neurlang/ipa-whisper-base",
+  "model_revision": "949f7c4e4ee374b5202bc5886f6e4552e5ae2371",
+  "seed": 0,
+  "transformers_version": "4.57.1",
+  "torch_version": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "precision": "FP32",
+  "batch_size": 1,
+  "do_sample": false,
+  "num_beams": 1,
+  "max_length": 448,
+  "language": null,
+  "task": null,
+  "begin_suppress_tokens": [
+    220,
+    50257
+  ],
+  "suppress_tokens": [],
+  "forced_decoder_ids": null,
+  "normalization_policy": {
+    "unicode": "NFD",
+    "trim_outer_whitespace": true,
+    "collapse_repeated_ordinary_U0020_spaces": true,
+    "keep_spaces": true,
+    "keep_ipa_marks_and_punctuation": true
+  },
+  "requested_validation_clips": 732,
+  "predictions_available": 732,
+  "components": 16,
+  "reference_codepoints_scored": 64137,
+  "substitutions": 36780,
+  "deletions": 4171,
+  "insertions": 25193,
+  "edit_count": 66144,
+  "corpus_cer": 1.031292389728238,
+  "corpus_cer_percent": 103.1292389728238,
+  "decode_errors": 0,
+  "empty_predictions": 0,
+  "eos_terminated": 602,
+  "hit_448_token_cap_without_eos": 130,
+  "replacement_character_outputs": 52,
+  "automatic_english_prefix_clips": 732,
+  "evaluated_audio_hours": 1.881808350694446,
+  "summed_sample_runtime_seconds": 707.3469167430012,
+  "mean_sample_runtime_seconds": 0.9663209245122967,
+  "real_time_factor": 0.10441299964383964,
+  "inference_passes": 2,
+  "summed_pass_wall_seconds": 709.7662552979998,
+  "full_validation_pass_elapsed_seconds": 698.5551647639999,
+  "full_validation_pass_newly_processed_clips": 720,
+  "full_validation_pass_peak_allocated_gpu_mib": 426.2099609375,
+  "full_validation_pass_peak_reserved_gpu_mib": 460.0,
+  "test_data_used": false,
+  "inference_rerun_for_reporting": false,
+  "checks": {
+    "membership_and_references_match_frozen_validation": true,
+    "all_per_clip_SDI_recomputed": true,
+    "csv_matches_jsonl": true,
+    "all_plot_breakdowns_cover_full_validation": true
+  },
+  "duration_breakdown": [
+    {
+      "group": "(0, 3] s",
+      "clips": 147,
+      "reference_codepoints": 2579,
+      "edits": 2903,
+      "cer": 1.1256300891818534
+    },
+    {
+      "group": "(3, 5] s",
+      "clips": 104,
+      "reference_codepoints": 4189,
+      "edits": 3309,
+      "cer": 0.7899259966579136
+    },
+    {
+      "group": "(5, 10] s",
+      "clips": 201,
+      "reference_codepoints": 14120,
+      "edits": 13580,
+      "cer": 0.9617563739376771
+    },
+    {
+      "group": "(10, 15] s",
+      "clips": 131,
+      "reference_codepoints": 14368,
+      "edits": 16940,
+      "cer": 1.1790089086859687
+    },
+    {
+      "group": "(15, 20] s",
+      "clips": 86,
+      "reference_codepoints": 14044,
+      "edits": 14631,
+      "cer": 1.0417972087724294
+    },
+    {
+      "group": "(20, 30] s",
+      "clips": 63,
+      "reference_codepoints": 14837,
+      "edits": 14781,
+      "cer": 0.9962256520860012
+    }
+  ],
+  "component_breakdown": [
+    {
+      "group": "Component 01",
+      "clips": 23,
+      "reference_codepoints": 1761,
+      "edits": 1592,
+      "cer": 0.9040318001135719
+    },
+    {
+      "group": "Component 02",
+      "clips": 14,
+      "reference_codepoints": 1230,
+      "edits": 1116,
+      "cer": 0.9073170731707317
+    },
+    {
+      "group": "Component 03",
+      "clips": 53,
+      "reference_codepoints": 4742,
+      "edits": 4387,
+      "cer": 0.9251370729649937
+    },
+    {
+      "group": "Component 04",
+      "clips": 135,
+      "reference_codepoints": 13177,
+      "edits": 12343,
+      "cer": 0.9367079001290127
+    },
+    {
+      "group": "Component 05",
+      "clips": 19,
+      "reference_codepoints": 2698,
+      "edits": 2581,
+      "cer": 0.9566345441067458
+    },
+    {
+      "group": "Component 06",
+      "clips": 218,
+      "reference_codepoints": 13390,
+      "edits": 13331,
+      "cer": 0.9955937266616878
+    },
+    {
+      "group": "Component 07",
+      "clips": 25,
+      "reference_codepoints": 4950,
+      "edits": 4930,
+      "cer": 0.9959595959595959
+    },
+    {
+      "group": "Component 08",
+      "clips": 64,
+      "reference_codepoints": 6633,
+      "edits": 6649,
+      "cer": 1.0024121815166591
+    },
+    {
+      "group": "Component 09",
+      "clips": 22,
+      "reference_codepoints": 2672,
+      "edits": 2788,
+      "cer": 1.0434131736526946
+    },
+    {
+      "group": "Component 10",
+      "clips": 49,
+      "reference_codepoints": 3329,
+      "edits": 3583,
+      "cer": 1.0762991889456293
+    },
+    {
+      "group": "Component 11",
+      "clips": 36,
+      "reference_codepoints": 2516,
+      "edits": 2926,
+      "cer": 1.1629570747217806
+    },
+    {
+      "group": "Component 12",
+      "clips": 11,
+      "reference_codepoints": 771,
+      "edits": 911,
+      "cer": 1.1815823605706874
+    },
+    {
+      "group": "Component 13",
+      "clips": 16,
+      "reference_codepoints": 1599,
+      "edits": 2024,
+      "cer": 1.265791119449656
+    },
+    {
+      "group": "Component 14",
+      "clips": 13,
+      "reference_codepoints": 1373,
+      "edits": 1783,
+      "cer": 1.2986161689730518
+    },
+    {
+      "group": "Component 15",
+      "clips": 30,
+      "reference_codepoints": 3126,
+      "edits": 4929,
+      "cer": 1.5767754318618041
+    },
+    {
+      "group": "Component 16",
+      "clips": 4,
+      "reference_codepoints": 170,
+      "edits": 271,
+      "cer": 1.5941176470588236
+    }
+  ]
+}

@@ -1,30 +1,22 @@
 # Narration: next steps
 
-Updated 1 November 2026 after Phase 5A bundle verification. **Phase 4 engineering checks and Phase 5A validation-input preparation are complete.** No zero-shot validation/test CER or Nyishi fine-tuning has run.
+Updated 1 November 2026 after Phase 5B B0 saved-result verification.
 
 ## Completed evidence
 
-- Minimal transcript formatting preserves raw strings and IPA marks.
-- Phase 3.5B is accepted, frozen and hashed: 3,629 train, 732 validation, 683 test clips. Manifests remain private.
-- 5,044 frozen and 42 set-aside labels pass tokenizer representation/length checks. The 42 remain excluded pending review.
-- Twelve training clips pass audio/features; repeated first-clip inference and checkpoint save/reload match.
-- Corrected full-token diagnostics confirm six EOS endings and six cap hits without EOS. All 12 decoded predictions match the earlier route.
-- Actual inference environment and memory/time are recorded in [Phase 4 results](PHASE4_RESULTS.md). This does not establish transcription accuracy or training fit.
-- Phase 5A privately packaged and independently verified all 732 frozen validation WAVs (1.881808 hours; 64,137 NFD reference code points). Zero audio extraction errors; frozen manifests and source shards remain unchanged. See [Phase 5A results](PHASE5A_RESULTS.md).
+- Phase 3.5B is frozen: 3,629 train, 732 validation, 683 test clips; membership remains private.
+- Phase 4 processor/tokenizer/model engineering and Phase 5A private validation preparation passed their recorded checks.
+- **Phase 5B full-validation B0 measurement is complete:** 732 clips / 1.881808 hours, 64,137 reference code points, S/D/I 36,780 / 4,171 / 25,193; **103.12924% corpus CER**. No failed/empty predictions; 130 cap hits without EOS, 52 U+FFFD outputs, all retained in CER.
+- Stale preflight plots/runtime fields were corrected from saved predictions without model inference. All four public plots cover 732 clips. See [Phase 5B results](PHASE5B_RESULTS.md).
+- The supplied export lacks the separately saved training-only processor illustrations and an executed Kaggle notebook. Those ancillary evidence checks remain open; no B0 rerun is required to correct reporting.
 
-## Next: Phase 5 zero-shot validation baseline
+## Next: supervised training smoke and pilot
 
-1. Upload `phase5_validation_bundle.zip` privately to Kaggle and verify its checksums there. Keep it separate from the Phase 4 training-smoke dataset.
-2. In Phase 5B, plot waveform, exact processor log-Mel features and padding boundaries from a few existing training-smoke clips; verify CER on known pairs, NFD combining marks and empty predictions.
-3. Run a small validation preflight, then all 732 validation rows with resumable per-sample outputs. Preserve raw and normalized hypotheses, full-token termination flags, S/D/I and failure statuses. Failed/empty predictions remain in the denominator.
-4. Keep the pinned checkpoint/software, FP32 and greedy decoding. Record automatic language-prefix selection and inherited begin-suppression settings. Do not invent a Nyishi token or tune on test.
-5. Report corpus CER, reference characters, sample/hour counts, failures, EOS/cap flags, runtime and memory. CER may exceed 100% due to repeated insertions.
+1. Keep the B0 checkpoint/configuration, frozen membership and scoring fixed. Review selected high/low-CER, capped and Unicode-error outputs privately against audio and references, preserving label uncertainty.
+2. Retain the executed notebook and separate processor illustrations when available. Private references, predictions, audio, manifests, IDs and source provenance remain excluded from publication.
+3. Before Phase 6A, specify decoder-prefix, label shifting and padding-mask policy without inventing a Nyishi token. Any changed decoding policy is a separate declared validation experiment.
+4. Complete Phase 6A: finite FP16-AMP loss and gradients, a verified optimizer update, and checkpoint/resume including optimizer/scaler state. These checks are not run yet.
+5. Then run a component-aware 1–2 hour Phase 6B training pilot, select by validation CER and measure training speed/memory. Full fine-tuning and matched LoRA follow only after a stable pilot; improvement and resource fit remain unmeasured.
+6. Keep all 683 test clips untouched until final selection. Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication.
 
-## Then: supervised pilot and final evaluation
-
-- Train a speaker-aware 1–2 hour subset from training only; select checkpoints by validation CER and measure training speed/memory.
-- Expand only after the pilot is stable, using the same frozen references and scoring policy.
-- Reserve the frozen test split for final evaluation of the pinned zero-shot and selected fine-tuned checkpoints. No test-driven selection.
-- Preserve label/identity review limitations and the lack of expert Nyishi adjudication.
-
-See [the protocol](PHASE4_ZERO_SHOT_PROTOCOL.md) for the CER contract. Public publication excludes audio, private manifests, transcript-bearing predictions and raw token sequences.
+See the local sprint plan for provisional training settings and [the protocol](PHASE4_ZERO_SHOT_PROTOCOL.md) for the evaluation contract. No Nyishi training or final test evaluation has run.

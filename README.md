@@ -13,14 +13,14 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 | Phase 3.5B split | Accepted, frozen and hashed locally |
 | Phase 4 processor/model smoke test | **Engineering checks complete**, including corrected EOS/cap diagnostics |
 | Phase 5A validation-input preparation | **Completed and independently verified**; private bundle ready for Kaggle |
-| Zero-shot validation CER | **Next — not run** |
+| Phase 5B B0 validation CER | **732/732 scored; 103.13% CER; reporting corrected** |
 | Nyishi fine-tuning and final test evaluation | **Not run** |
 
-**Latest finding:** the pipeline works on a Tesla T4, but current predictions contain omissions and repetition. In the 12 training-only smoke examples, **6 ended with EOS and 6 reached the 448-token cap without EOS**. This is a measured engineering diagnostic, not a held-out accuracy result.
+**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and four plots were regenerated from saved predictions without model inference. The supplied export lacks the separate processor illustrations and an executed notebook, so those ancillary evidence checks remain open.
 
 ### Navigate
 
-[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Next steps](#next-steps-zero-shot-validation-baseline)
+[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Phase 5B](#phase-5b-b0-full-validation-zero-shot-baseline) · [Next steps](#next-steps-supervised-training-smoke-and-pilot)
 
 <a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open the Phase 4 results notebook with saved figures</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full Phase 4 report</ins></a>
 
@@ -277,18 +277,69 @@ The export labels the measured run **v6**; the prepared source is **v7**, which 
 
 ![Phase 5A validation metadata coverage](assets/phase5a/03_validation_metadata_coverage.png)
 
-**Interpretation:** Phase 5A confirms that the intended validation inputs were copied and packaged intact. It does not check whether the references are linguistically correct and contains no model predictions; **inference, CER scoring and training have not run**. The ZIP, source locator map and private provenance records are not published here.
+**Interpretation:** Phase 5A confirms that the intended validation inputs were copied and packaged intact. It does not check whether the references are linguistically correct and contains no model predictions; **Phase 5A itself performs no inference, CER scoring or training**. The ZIP, source locator map and private provenance records are not published here.
 
-## Next steps: zero-shot validation baseline
+## Phase 5B: B0 full-validation zero-shot baseline
 
-1. **Upload the Phase 5A ZIP privately to Kaggle** and verify its checksums there; keep it separate from the existing Phase 4 training-smoke dataset.
-2. **Phase 5B:** illustrate waveform and processor log-Mel features using training-smoke examples, test the CER scorer on known pairs and combining marks, then run a small validation preflight.
-3. Run the full **732-clip validation zero-shot baseline** with the pinned checkpoint/settings and resumable per-sample outputs.
-4. Report corpus CER, S/D/I, reference-character denominator, clip/hour coverage, failures, EOS/cap flags, runtime and GPU memory. Repetition and U+FFFD count as output errors; CER can exceed 100%.
-5. After reviewing B0, complete the supervised training smoke and 1–2 hour pilot; measure training memory before expanding.
-6. Reserve the **683 test clips** until the selected recipe is ready. Any decoding-policy alternative is a documented validation experiment.
+[Corrected source notebook](notebooks/Phase-5B-Zero-Shot-Validation.ipynb) · [Saved aggregate results notebook](notebooks/Phase-5B-Results-Public.ipynb) · [Full report](docs/PHASE5B_RESULTS.md) · [Aggregate JSON](docs/PHASE5B_RESULTS_AGGREGATE.json)
 
-No further general cleaning or split search is required to begin the baseline. Save the executed Kaggle notebook locally for provenance when available.
+### Methods and verified coverage
+
+The pinned `neurlang/ipa-whisper-base` revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371` ran on a Tesla T4 with PyTorch 2.11.0+cu128, Transformers 4.57.1, seed 0, **FP32, batch 1, greedy decoding and a 448-token full-sequence cap**. Language/task and decoder prefix were not forced; inherited begin-suppression `[220,50257]` remained. All 732 sequences automatically selected the English/transcribe prefix; this is an observation, not evidence of Nyishi support.
+
+Both references and hypotheses use **NFD + outer trim + repeated ordinary-space collapse**. Spaces, punctuation and every IPA mark remain. Each clip is scored separately; corpus CER sums S/D/I across clips and divides by total reference code points. It is not mean clip CER or phoneme error rate. Failed/empty hypotheses remain in the denominator; there were none. WER and alternate/raw-policy CER were not calculated.
+
+Private saved predictions were checked against all **732 frozen validation members and references**, across **16 components**; all per-clip S/D/I were independently recalculated. The full pass reused 12 preflight predictions and generated the remaining 720. No test data was needed or scored; Nyishi fine-tuning has not run.
+
+| Measurement | Verified B0 result |
+|---|---:|
+| Clips / evaluated audio | **732 / 1.881808 hours** |
+| Reference code points, including spaces | **64,137** |
+| Substitutions / deletions / insertions | **36,780 / 4,171 / 25,193** |
+| Total edits / corpus CER | **66,144 / 103.12924%** |
+| Decode errors / empty predictions | **0 / 0** |
+| EOS terminated / capped without EOS | **602 (82.2%) / 130 (17.8%)** |
+| Outputs containing U+FFFD | **52 (7.1%)** |
+| Sum / mean per-clip elapsed time | **707.3469 s / 0.966321 s** |
+| Observed real-time factor | **0.104413** |
+| Full pass, 720 newly processed clips | **698.5552 s** |
+| Full-pass peak PyTorch allocated / reserved | **426.21 / 460 MiB** |
+
+Per-clip time includes processing/decoding work, excludes model loading and reporting, and differs from pass wall time (709.7663 s across both passes). Memory is measured PyTorch usage, not total GPU occupancy or a training-fit claim.
+
+### Reporting correction
+
+The original export's CER/edit totals were correct, but its plots, mean runtime and last-pass telemetry still described the **12-clip preflight**. The save cell now reloads saved predictions and pass telemetry and regenerates every metric and all four validation plots. A regression check reproduced a stale preflight report followed by a full result and verified that running the save cell alone repairs the export. **No inference was rerun.** The four public plots each summarize all 732 clips; subgroup totals recover the full denominator/edit count. The review prose's earlier memory values mixed MB and MiB; the corrected figures above use byte telemetry.
+
+### Figures and interpretation
+
+![Phase 5B CER by duration, all 732 validation clips](assets/phase5b/01_cer_by_duration.png)
+
+Duration scores are descriptive, without a monotonic pattern. Bins are right-closed: the first includes 147 clips at or below 3 s, whereas Phase 5A reported 146 strictly below 3 s.
+
+![Phase 5B CER by anonymous component, all 732 validation clips](assets/phase5b/02_cer_by_component.png)
+
+Existing components range from about 90.4% to 159.4% CER with unequal sample counts. Numbers are anonymous plot positions sorted by CER; no mapping to frozen aliases or speakers is published. These components are not expert-verified speaker identities, and small groups do not support broad conclusions.
+
+![Phase 5B edit counts, all 732 validation clips](assets/phase5b/03_edit_counts.png)
+
+Substitutions contribute **55.6%** of edits, insertions **38.1%**, deletions **6.3%**. CER exceeds 100% because insertions can raise edit counts above reference length. This is a weak zero-shot baseline and a fixed comparison point for supervised adaptation; it does not establish model superiority or linguistic competence.
+
+![Phase 5B generation diagnostics, all 732 validation clips](assets/phase5b/04_generation_flags.png)
+
+The 130 cap hits and 52 U+FFFD outputs remain in CER. Unicode flags can overlap stopping flags. Their presence motivates private error analysis; changing decoding or removing labels cannot be assumed to improve recognition.
+
+**Completion scope:** the full B0 validation measurement and corrected aggregate publication are complete. The supplied ZIP omits the training-only processor figures saved outside its result folder; the local source notebook has no saved execution outputs. Those illustration/executed-notebook checks remain unverified. Public results are derived from saved predictions and do not claim that the full notebook checklist was witnessed.
+
+## Next steps: supervised training smoke and pilot
+
+1. Keep B0, frozen membership and scoring fixed. Privately review high/low-CER, capped and U+FFFD outputs against audio/references; record error categories and uncertainty without deleting difficult examples or rewriting labels to improve scores.
+2. Retain the executed Kaggle notebook and separate training-only processor illustrations when available; B0 inference need not be rerun for reporting.
+3. Specify the supervised decoder-prefix, target-shift and padding-mask policy without inventing a Nyishi token. Any decoding alternative is a separately declared validation experiment.
+4. **Phase 6A:** check finite FP16-AMP loss/gradients, a real optimizer update and full checkpoint/resume state. **Phase 6B:** then run the planned component-aware 1–2 hour pilot, measure training memory/speed, and select checkpoints by validation CER.
+5. Only after stable pilot evidence, proceed to planned full fine-tuning and matched LoRA comparisons. Reserve the **683 frozen test clips** for final evaluation of the selected configuration.
+
+These are recommendations from the existing sprint plan; supervised improvement and training resource requirements remain unmeasured. Retain unresolved label/identity uncertainty, month shift, prompt overlap and lack of expert Nyishi adjudication.
 
 ## Historical Narration findings
 
@@ -308,7 +359,7 @@ No further general cleaning or split search is required to begin the baseline. S
 
 ### Preserved analysis evidence
 
-The local recovered notebooks preserve original analyses and outputs for thesis reporting. Public historical copies retain saved non-audio figures/tables; embedded audio remains local. Some historical public outputs contain small displayed transcript tables, but bulk datasets and private review evidence are not distributed. This Phase 4 release adds no transcript-bearing results.
+The local recovered notebooks preserve original analyses and outputs for thesis reporting. Public historical copies retain saved non-audio figures/tables; embedded audio remains local. Some historical public outputs contain small displayed transcript tables, but bulk datasets and private review evidence are not distributed. This Phase 5B release adds no transcript-bearing results.
 
 ## Repository guide
 
@@ -320,16 +371,22 @@ The local recovered notebooks preserve original analyses and outputs for thesis 
 | `docs/PHASE4_RESULTS.md`, `docs/PHASE5A_RESULTS.md` | Phase reports, provenance, limitations and next actions |
 | `docs/PHASE4_RESULTS_AGGREGATE.json` | Machine-readable engineering findings |
 | `docs/PHASE5A_RESULTS_AGGREGATE.json` | Machine-readable bundle verification and coverage results |
+| `notebooks/Phase-5B-Zero-Shot-Validation.ipynb` | Corrected inference/reporting source; private inputs required, outputs cleared |
+| `notebooks/Phase-5B-Results-Public.ipynb` | Saved aggregate summary and all four full-validation plots |
+| `docs/PHASE5B_RESULTS.md`, `docs/PHASE5B_RESULTS_AGGREGATE.json` | Verified B0 method, results, limitations and public numeric plot inputs |
+| `assets/phase5b/`, `scripts/render_phase5b_results.py` | Full-validation plots and renderer using public aggregates only |
+| `scripts/audit_phase5b_saved_results.py` | Recompute metrics from authorized private saved predictions; no inference |
 | `assets/phase4/`, `assets/phase5a/` | Public plots; no audio is embedded |
 | `scripts/render_phase4_results.py` | Rebuild plots from public numeric diagnostics |
 | `scripts/phase3_5b_proposal.py` | Historical deterministic split search; private inputs required |
 | `src/nyishi_asr/`, `run_preprocessing.py` | Historical reconstruction/integrity code |
 | `tests/` | Historical checks, some requiring private fixtures |
 
-### Rebuild Phase 4 figures
+### Rebuild Phase 4 and Phase 5B figures
 
 ```bash
 python scripts/render_phase4_results.py
+python scripts/render_phase5b_results.py
 ```
 
 Requires NumPy and Matplotlib. Reads only public JSON metrics and anonymous numeric diagnostics; performs no inference.
@@ -342,4 +399,4 @@ Historical reconstruction code uses Python 3.11 and the root `requirements.txt`.
 
 Audio, bulk transcripts, private manifests, speaker/reviewer metadata, workbooks, local inventories, raw generation tokens, result ZIPs and weights remain outside this release. The dataset is <a href="https://huggingface.co/datasets/Eries1506/nyishi-speed-tb-phase1"><ins>Eries1506/nyishi-speed-tb-phase1</ins></a>; observe its license and attribution terms. This repository grants no dataset rights.
 
-**Scientific limitations:** unresolved label/identity uncertainty, no expert Nyishi adjudication, recording-month distribution shift, prompt overlap on distinct audio, and no held-out model accuracy result yet. Engineering checks do not establish tone recognition, linguistic correctness or model superiority.
+**Scientific limitations:** unresolved label/identity uncertainty, no expert Nyishi adjudication, recording-month distribution shift, prompt overlap on distinct audio, and poor zero-shot validation accuracy; final test performance is unmeasured. Engineering checks do not establish tone recognition, linguistic correctness or model superiority.
