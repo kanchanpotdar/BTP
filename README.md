@@ -1,148 +1,317 @@
 # Nyishi Narration ASR research
 
-Source code and analysis notebooks with saved plots and tables for a Nyishi IPA speech-recognition research project. Current scope is Dataset A Narration; YouTube is deferred.
+**Dataset A Narration · IPA transcription · reproducible speaker/session splits**
 
-## Status
+This project builds a Nyishi speech-to-IPA baseline, then measures whether supervised adaptation improves it. The first checkpoint is **`neurlang/ipa-whisper-base`**. Dataset B YouTube is deferred.
 
-The Phase 3.5B split was accepted, frozen and hashed locally on 1 November 2026. **Phase 4 core engineering checks passed on Kaggle's Tesla T4.** A stopping-diagnostic correction still needs a small verification run. No Nyishi fine-tuning or validation/test CER has been completed. Raw/derived datasets and private predictions remain local.
+## Current status
 
-## Phase 0: local inventory
+| Work | Status |
+|---|---|
+| Inventory, eligibility and minimal transcript formatting | Completed through Phase 2; source data preserved |
+| Targeted label/speaker review | Conservative exclusions recorded; expert adjudication remains pending |
+| Phase 3.5B split | Accepted, frozen and hashed locally |
+| Phase 4 processor/model smoke test | **Engineering checks complete**, including corrected EOS/cap diagnostics |
+| Zero-shot validation CER | **Next — not run** |
+| Nyishi fine-tuning and final test evaluation | **Not run** |
 
-The [Phase 0 notebook](notebooks/Phase-0.ipynb) records the 31 October 2026 local environment and data inventory, with its saved cell outputs. All required local inputs were found. The 59 Narration Parquet shards and the starting `master_A_v1_1.parquet` each contain 6,718 rows; the master has 54 columns. The local Python 3.11.1 environment had NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. PyTorch and the model-training packages were not installed there. At Phase 0, Kaggle compute was unmeasured; Phase 4 now records a Tesla T4 and inference memory, while quota remains unrecorded.
+**Latest finding:** the pipeline works on a Tesla T4, but current predictions contain omissions and repetition. In the 12 training-only smoke examples, **6 ended with EOS and 6 reached the 448-token cap without EOS**. This is a measured engineering diagnostic, not a held-out accuracy result.
 
-The first-pass manifest counts are 5,651 rows flagged with transcripts, 1,067 flagged missing, 6,714 marked `audio_ok`, three with zero decoded duration, and 708 over 30 seconds. Combining labelled, audio-OK and 0.5–30-second conditions gives 5,086 candidate rows. These conditions have not yet undergone a final QC waterfall or speaker/session split; the candidate count is not a training-set size.
+### Navigate
+
+[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Next steps](#next-steps-zero-shot-validation-baseline)
+
+<a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open the Phase 4 results notebook with saved figures</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full Phase 4 report</ins></a>
+
+## Research rules
+
+- **Scope:** Narration only; preserve raw audio, transcripts, IDs and provenance.
+- **References:** Unicode NFD, outer whitespace trim and collapse repeated ordinary spaces. Preserve IPA letters, punctuation, tone/length/dental/aspiration marks and speaker-specific forms.
+- **Splits:** whole speaker/session/duplicate-audio components; uncertain identities excluded from held-out data under the recorded conservative policy.
+- **Evaluation:** corpus-level NFD **code-point CER**, including spaces, with substitutions/deletions/insertions and all denominators. Validation selects settings/checkpoints; test is reserved for final evaluation.
+- **Evidence:** distinguish historical analysis, proposals, verified results and work not run. Tokenizer support does not prove Nyishi recognition.
+
+## Phase 0: inventory and local setup
+
+<a href="notebooks/Phase-0.ipynb"><ins>Open Phase 0 notebook and saved outputs</ins></a>
+
+### What was established
+
+- **6,718 Narration rows**, 59 Parquet shards and a **54-column** starting master (`master_A_v1_1.parquet`).
+- Initial flags: 5,651 rows with references, 1,067 missing, 6,714 marked audio-OK, three zero-duration clips and 708 clips over 30 seconds.
+- Combining initial labelled/audio-OK/0.5–30 s conditions yielded **5,086 candidates**, before final review and splits.
+- Local setup at that time: Python 3.11.1, NumPy 2.3.5, pandas 2.2.3, PyArrow 26.0.0 and SoundFile 0.13.1. Model packages were not yet installed locally. The later Kaggle environment is recorded under Phase 4.
+
+### Figure: inventory counts
 
 ![Narration inventory counts](assets/narration_inventory.svg)
 
+**Meaning:** the master is a preserved source table. Initial flags and candidate counts are not a frozen training-set definition.
+
 ## Phase 1: eligibility and audio checks
 
-The [Phase 1 notebook](notebooks/Phase-1.ipynb) now includes its saved output tables and plots. Its 6,718 master rows joined one-to-one with the full-decode facts. There were no full-decode failures, sample-rate disagreements, channel disagreements or disagreements between decoded-duration fields. The filtering waterfall is:
+<a href="notebooks/Phase-1.ipynb"><ins>Open Phase 1 notebook and saved outputs</ins></a>
+
+### Filtering waterfall
+
+The 6,718 master rows joined one-to-one with full-decode facts. The audit recorded no full-decode failures or sample-rate/channel/decoded-duration disagreements.
 
 | First applicable outcome | Clips |
 |---|---:|
-| Initial 0.5–30-second candidates | 5,086 |
-| Missing or empty reference | 1,067 |
+| Eligible 0.5–30 s candidates | **5,086** |
+| Missing/empty reference | 1,067 |
 | Outside initial duration range | 561 |
 | Zero audio frames | 3 |
 | Duration discrepancy held for review | 1 |
 
-The candidates contain **14.826 decoded hours** before any speaker/session split. The 561 duration exclusions comprise 528 labelled clips above 30 seconds and 33 labelled, nonempty clips below 0.5 seconds. Another three labelled clips below 0.5 seconds have zero frames and are counted under that earlier exclusion. One duration-mismatch clip, `A_004972`, is held for review. Of the candidates, 967 are provisionally train-only because of pair linkage, multiple speakers or uncertain identity. The source master and decode-facts hashes did not change during the Phase 1 run.
+The candidates contain **14.826 decoded hours**. Duration exclusions comprise 528 labelled clips over 30 s and 33 labelled, nonempty clips below 0.5 s. The separate zero-frame and duration-discrepancy exclusions avoid double counting. **967 candidate rows** are provisionally train-only because of pair linkage, multiple speakers or uncertain identity. Source hashes were unchanged.
+
+### Figures: eligibility and duration
 
 ![Phase 1 eligibility reasons](assets/phase1_eligibility_reasons.png)
 
+**Meaning:** missing references and duration restrictions account for most exclusions. Source records remain preserved.
+
 ![Phase 1 duration distribution](assets/phase1_duration_distribution.png)
+
+**Meaning:** duration varies substantially; first-pass Whisper examples are limited to 0.5–30 s. This figure was separately generated from the saved Phase 1 audit, rather than an executed notebook plot cell.
+
+### Figures: speaker coverage and identity status
 
 ![Phase 1 speaker hours](assets/phase1_speaker_hours.png)
 
-![Phase 1 speaker status and train-only flags](assets/phase1_speaker_status.png)
+**Meaning:** unequal speaker hours make row counts alone insufficient for split balance.
 
-The eligibility, speaker-hours and speaker-status images come from saved Phase 1 notebook outputs. The duration image was generated separately from the same saved Phase 1 audit because its notebook plot cell had not been executed. No train/validation/test split or model baseline is implied by these figures.
+![Phase 1 speaker status](assets/phase1_speaker_status.png)
 
-## Phase 2: transcript formatting policy
+**Meaning:** uncertain or linked identities require conservative grouping; their flags do not mean the recordings are silent or unusable for training.
 
-The [Phase 2 notebook](notebooks/Phase-2.ipynb) includes its saved tables and plots. It reads the 5,086 first-pass candidates and retains every `transcript_raw`. Its derived `transcript_phase2` applies Unicode NFD, trims outer whitespace and collapses repeated ordinary spaces. The run changed **497 rows (9.77%)**, entirely because of repeated spaces; NFD and outer trimming changed zero rows. The character total fell from 522,368 to 521,747, a difference of 621 spaces. Both versions contain 102 distinct code points in this candidate subset. The source hash was unchanged and the policy was idempotent.
+## Phase 2: transcript formatting
 
-![Phase 2 formatting changes and transcript lengths](assets/phase2_normalization_and_length.png)
+<a href="notebooks/Phase-2.ipynb"><ins>Open Phase 2 notebook and saved outputs</ins></a>
+
+### Policy and measured changes
+
+The derived `transcript_phase2` retains `transcript_raw` and applies **NFD + outer trim + repeated ordinary-space collapse**.
+
+- **497 rows changed (9.77%)**, entirely through repeated-space removal.
+- Character total: **522,368 → 521,747**, a reduction of 621 ordinary spaces.
+- NFD and outer trimming changed zero rows in this run; the policy was idempotent.
+- Both candidate views contain 102 distinct code points. Source hashes were unchanged.
+
+### Figures: formatting changes and label lengths
+
+![Phase 2 formatting and label lengths](assets/phase2_normalization_and_length.png)
+
+**Meaning:** these are mechanical formatting changes. Rare marks are retained because frequency does not determine linguistic importance.
 
 ![Phase 2 audio duration versus label length](assets/phase2_duration_vs_label_length.png)
 
-The plots describe label formatting and length, not transcription quality or model accuracy. The Unicode inventory includes dental combining marks, nasalization, length marks and rare combining accents. Their frequency does not determine whether they are linguistically meaningful. The first baseline preserves these marks and does not automatically convert `g`/`ɡ` or punctuation-like symbols.
+**Meaning:** reference length and audio duration are useful diagnostics; they do not establish transcript correctness or model accuracy.
 
-## Phase 2.5: targeted review before splitting
+Plain `g`/IPA `ɡ`, dental marks, nasalization, length marks and rare accents are not automatically merged or deleted. Historical A_v1/A_v2 replacements remain provisional alternatives.
 
-The [Phase 2.5 notebook](notebooks/Phase-2.5.ipynb) saved its review tables and plot. Its queue contains **42 distinct clips / 0.201 hours**: 41 clips with `:`, `;` or `[`, and one clip with combining acute accents. These symbols are not automatically deleted or rewritten. The first split proposals conservatively set all 42 clips aside; they remain in the source data. The notebook also lists five proposed speaker merges, 967 provisionally train-only candidate rows spanning nine groups, and one recording session linking two proposed groups. The review decisions remain pending.
+## Phase 2.5: targeted review
 
-![Phase 2.5 targeted review workload](assets/phase2_5_review_workload.png)
+<a href="notebooks/Phase-2.5.ipynb"><ins>Open Phase 2.5 notebook and saved outputs</ins></a>
 
-The pinned IPA-Whisper processor's tokenizer round-trip and target-length checks remain a model-compatibility gate; no processor or weights were downloaded in Phase 2 or 2.5.
+### Conservative decisions
 
-## Phase 3: first leakage-aware split proposal
+- **42 clips / 0.201 hours** were set aside: 41 contain `:`, `;` or `[`, and one contains combining acute accents.
+- The review also lists five speaker-merge proposals, 967 provisional train-only rows across nine groups and one session connecting two proposed groups.
+- Expert review remains pending; original records and user review fields are preserved.
 
-The [Phase 3 notebook](notebooks/Phase-3.ipynb) removed the 42 uncertain-symbol clips from the initial supervised pool, leaving **5,044 clips / 14.625 hours**. It hashed decoded waveforms and connected rows that share a proposed speaker group, public/raw speaker ID, recording session or exact audio. The resulting 44 indivisible components were assigned as whole units. The proposed split was **2,876 train / 1,428 validation / 740 test clips** (**10.50 / 2.19 / 1.93 hours**). Known speaker, session and exact-audio overlap across splits was zero; no train-only rows entered held-out sets. One complete transcript string appeared across splits, which is prompt overlap, not evidence of identical audio.
+### Figure: review workload
 
-![Phase 3 split size and speaker groups](assets/phase3_split_sizes.png)
+![Phase 2.5 review queue](assets/phase2_5_review_workload.png)
+
+**Meaning:** the queue identifies uncertainty to review, not symbols to delete. Phase 4 subsequently confirmed that all 42 set-aside labels are tokenizable; that does not resolve their linguistic correctness.
+
+## Phase 3: first group split proposal
+
+<a href="notebooks/Phase-3.ipynb"><ins>Open Phase 3 notebook and saved outputs</ins></a>
+
+### Grouping and proposal
+
+Setting aside 42 clips left **5,044 clips / approximately 14.625 hours**. Connections through proposed speaker groups, speaker keys, sessions and exact decoded-waveform hashes produced **44 indivisible components**.
+
+| Proposed partition | Clips | Hours |
+|---|---:|---:|
+| Train | 2,876 | 10.50 |
+| Validation | 1,428 | 2.19 |
+| Test | 740 | 1.93 |
+
+Known speaker/session/exact-audio overlap was zero, and no train-only rows were held out. One full reference string occurred across partitions on different audio: **prompt overlap**, not duplicate audio.
+
+### Figures: split size and category balance
+
+![Phase 3 split sizes](assets/phase3_split_sizes.png)
 
 ![Phase 3 category balance](assets/phase3_category_balance.png)
 
-The first proposal was not frozen. **52.9% of validation clips were under 3 seconds**, so validation could overemphasize very short utterances when choosing a checkpoint. The test set was also 96.4% November 2024 by audio hours. Month is a diagnostic rather than an automatic reason to reject a split, but it may signal changed speakers or recording conditions.
+**Decision:** this proposal was not frozen. Validation was **52.9% under 3 s**; test was **96.4% November 2024** by hours. Short-clip balance and recording-condition shifts needed review.
 
 ## Phase 3.5: category-aware revision
 
-The [Phase 3.5 notebook](notebooks/Phase-3.5.ipynb) searched whole-component assignments using hours and metadata for month, age, duration and gender. Its revised counts were **3,055 train / 542 validation / 1,447 test clips** (**10.23 / 2.20 / 2.19 hours**). Known structural overlap remained zero. Its internal search score improved, but that score is a design objective, not model accuracy.
+<a href="notebooks/Phase-3.5.ipynb"><ins>Open Phase 3.5 notebook and saved outputs</ins></a>
+
+### What changed
+
+The search considered whole components, hours, month, age, duration and gender. It proposed **3,055 train / 542 validation / 1,447 test** clips, approximately **10.23 / 2.20 / 2.19 hours**. Known structural overlap remained zero.
+
+### Figures: revised balance
 
 ![Phase 3.5 split comparison](assets/phase3_5_split_comparison.png)
 
 ![Phase 3.5 category comparison](assets/phase3_5_category_comparison.png)
 
-The revision exposed two more important problems: **one component supplied 90.5% of validation hours**, validation was **98.8% female by hours**, and **52.3% of test clips** were under 3 seconds. This proposal was not frozen.
+**Decision:** not frozen. One component supplied **90.5% of validation hours**, validation was **98.8% female** by hours, and **52.3% of test clips were under 3 s**. A better internal search score did not make this a better evaluation design.
 
-## Phase 3.5B: preferred split proposal
+## Phase 3.5B: accepted and frozen split
 
-The [Phase 3.5B notebook](notebooks/Phase-3.5B.ipynb) and its [deterministic proposal script](scripts/phase3_5b_proposal.py) put train-only components and four dominating components in training, then searched the remaining whole-component assignments. The criteria emphasize useful validation and test sets: both genders by audio hours, multiple independent components, limited influence from any one component, and a manageable share of clips under 3 seconds. They do not optimize model results.
+<a href="notebooks/Phase-3.5B.ipynb"><ins>Open Phase 3.5B notebook</ins></a> · <a href="scripts/phase3_5b_proposal.py"><ins>View the proposal code</ins></a>
 
-| Phase 3.5B split | Clips | Hours | Components | Female share of hours | Clips under 3 s | Largest component share of hours |
+### Final partition
+
+The proposal kept train-only and dominant components in training, then balanced held-out hours, gender, component influence and short clips. **Accepted and frozen locally on 1 November 2026.** Membership and SHA-256 hashes are retained privately.
+
+| Partition | Clips | Hours | Components | Female hours | Clips under 3 s | Largest component's hours |
 |---|---:|---:|---:|---:|---:|---:|
-| Train | 3,629 | 10.85 | 15 | 59.7% | 24.0% | 33.7% |
-| Validation | 732 | 1.88 | 16 | 50.9% | 19.9% | 24.1% |
-| Test | 683 | 1.89 | 13 | 50.9% | 13.8% | 33.7% |
+| **Train** | 3,629 | 10.851637 | 15 | 59.7% | 24.0% | 33.7% |
+| **Validation** | 732 | 1.881808 | 16 | 50.9% | 19.9% | 24.1% |
+| **Test** | 683 | 1.891057 | 13 | 50.9% | 13.8% | 33.7% |
 
-![Comparison of the three split proposals](assets/phase3_5b_proposal_comparison.png)
+### Figure: comparison of split strategies
 
-The saved Phase 3.5B audit passes its stated design gates: zero known cross-split overlap for component, speaker-group, public/raw speaker, session and exact-waveform keys; zero train-only rows held out. Validation and test include 75.6% and 67.8% November 2024 audio hours respectively, while training is 10.6% November 2024. This distribution shift should be reported, especially if month corresponds to recording conditions; it does not outweigh the severe validation and short-clip problems above for this first baseline. **Historical proposal status: Phase 3.5B was subsequently accepted and frozen locally on 1 November 2026; see current Status above.** The local derived manifests and audit JSON are excluded from this public source repository.
+![Comparison of the three split strategies](assets/phase3_5b_proposal_comparison.png)
+
+**Why selected:** a more usable balance than the earlier proposals while preserving known component/speaker/session/exact-audio separation. No train-only rows enter validation/test.
+
+**Remaining limitations:** November represents 75.6% of validation and 67.8% of test hours versus 10.6% of training. One complete reference string overlaps train/validation on distinct audio. Proposed identities lack full expert adjudication. Report these limitations; do not redesign the test set after seeing scores.
 
 ## Phase 4: processor and model smoke test
 
-The measured run verified tokenizer round trips on **5,044 frozen + 42 set-aside labels**, audio/features on **12 training-only clips**, repeated first-clip generation and checkpoint save/reload. Loaded/installed Transformers both report **4.57.1**. Batch-1 FP32 generation took **18.82 seconds** in the measured loop; peak PyTorch allocated/reserved GPU memory was **339.26 / 362 MiB**. These are inference measurements, not training requirements.
+<a href="notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb"><ins>Open the Kaggle source notebook</ins></a> · <a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open saved public results and plots</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full review</ins></a>
 
-Predictions exhibit substantial omissions and repetition. Six returned content sequences contain 445 tokens; the earlier zero EOS/cap flags were a measurement bug because Whisper's default tensor strips prefix/EOS. The corrected **v6 source is prepared but not yet run**. Preserve these poor outputs in later evaluation; no CER has been computed.
+### Compatibility and reproducibility: passed
 
-- [Corrected Kaggle notebook](notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb)
-- [Results notebook with saved aggregate figures](notebooks/Phase-4B-Results-Public.ipynb)
-- [Detailed results, limitations and next actions](docs/PHASE4_RESULTS.md)
-- [Machine-readable aggregate metrics](docs/PHASE4_RESULTS_AGGREGATE.json)
+- Pinned model/processor: **`neurlang/ipa-whisper-base`**, revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`.
+- **5,044 frozen + 42 set-aside references:** zero round-trip, unknown-token or target-length failures. The 42 remain excluded pending review.
+- **12 training-only audio clips:** valid finite `[1,80,3000]` features; repeated first-clip generation and checkpoint reload return identical tokens.
+- **Stack:** Transformers 4.57.1, PyTorch 2.11.0+cu128, Tesla T4, FP32, greedy batch 1, seed 0.
 
-![Phase 4 content lengths and repetition](assets/phase4/output_lengths_repetition.png)
+### Generation quality: limitations confirmed
 
-![Phase 4 inference memory](assets/phase4/inference_memory.png)
+| Diagnostic | Measured result |
+|---|---:|
+| Ended with EOS | **6/12** |
+| Reached 448-token limit without EOS | **6/12** |
+| Contains Unicode replacement character | **1/12** |
+| Longest identical-token runs | **419, 376, 211** |
+| Generation-loop wall time | **19.41 s** for 128.22 s audio |
+| Peak PyTorch allocated/reserved memory | **380.57 / 408 MiB** |
+| Validation/test CER or Nyishi training | **Not run** |
 
-Next: verify the corrected full-sequence stopping diagnostics on the same training clips, then establish corpus-level NFD code-point CER on the **732 frozen validation clips**. Keep test reserved for final evaluation. No additional split search or IPA mark removal is required.
+The corrected full-sequence diagnostics are now verified. The earlier zero EOS/cap flags were an instrumentation error. All 12 decoded hypotheses remain unchanged after the correction: the model still shows omissions, substitutions and extended repetition. These smoke examples do not establish a population error rate.
 
-## Findings from the recovered Narration analyses
+### Figure: input lengths and inference time
 
-The local recovered notebooks retain complete originals for thesis reporting. The three published analysis notebooks now include their saved non-audio plots, tables and textual results. Embedded WAV playback outputs are omitted from the public copies; the originals remain in the local BTP directory. The aggregate findings are summarized here; bulk datasets and review workbooks are not published.
+![Phase 4 inputs and timing](assets/phase4/01_inputs_and_timing.png)
 
-- The original row-level splits overlap heavily in speakers: 57 of 60 public speaker IDs appear in multiple splits and 49 in all three. A new speaker/session-aware split is needed before a held-out evaluation.
-- Earlier proposed grouping reduces 60 public speaker IDs to 55 groups, but name-based merges are unverified. The current status distribution is 5,712 `ok`, 622 `linked_to_pair`, 208 `multi_person`, and 176 `uncertain_identity`.
-- Narration audio is 16 kHz, mono PCM16. Three IDs have zero frames: `A_004973`, `A_006614`, `A_006615`. `A_004972` is 2.531 seconds decoded versus 3.89 seconds stated and needs boundary review. There are 708 clips above 30 seconds; 528 have transcript references. Long clips stay in the master for possible later aligned segmentation.
-- Raw references contain 107 distinct code points including space and are already in Unicode NFD. Repeated ordinary spaces occur in 640 references. Plain `g` and IPA `ɡ` both occur frequently. The old A_v1 and A_v2 conventions differ in 51 transcript strings; fewer unresolved flags under A_v2 do not validate its linguistic choices.
-- The audio signal audit found no decoding failures, three empty recordings and no nonempty all-zero recordings. It flagged 104 clips below −50 dBFS RMS. Those level measurements are review signals, not evidence that the speech is unusable.
+**Meaning:** clips from 0.75–28.82 s load successfully. Similar long outputs create similar decoding times; the first clip includes warm-up. Loop time includes repeated first inference and exports, not model loading or save/reload.
 
-The staged work derives eligibility from `transcript_raw`, `transcript_missing`, `audio_ok`, `audio_issue`, `duration_decoded`, and stable `sample_id`/`audio_path` fields. Speaker and session fields drive the group-level proposals. In the starting master, `transcript_normalized`, `duplicate_group_id`, and `final_split` are unfilled; the source master itself does not contain a final target policy or frozen split.
+### Figure: reference capacity and full generated lengths
 
-## Contents
+![Phase 4 target and generation lengths](assets/phase4/02_token_lengths.png)
 
-- `notebooks/`: Phase 0, 1, 2, 2.5, 3, 3.5 and 3.5B notebooks with saved results, plus three adapted historical analysis notebooks with saved non-audio plots/tables. Complete recovered originals, including embedded audio outputs, remain local for thesis reporting.
-- `src/nyishi_asr/` and `run_preprocessing.py`: historical staged reconstruction and integrity checks.
-- `scripts/prepare_narration_baseline.py`: earlier candidate-pool, duplicate-waveform and grouping analysis; its IPA-policy assumptions are not the selected minimal-normalization baseline.
-- `scripts/phase3_5b_proposal.py`: deterministic Phase 3.5B group-level split search and structural audit. It needs the local Phase 3.5 derived manifest, which is intentionally not published.
-- `tests/`: normalization, integrity, source-recovery and dataset-dependent checks.
-- `requirements.txt`: exact package versions from the existing reconstruction environment, not a model-training environment.
+**Meaning:** references fit the model. Six predictions hit the full 448-token cap. Target-token counts exclude special tokens; generation counts include the prefix/EOS, so the two panels have different denominators.
 
-## Data is not included
+### Figure: output growth and repetition
 
-Audio, transcripts, manifests, speaker/reviewer metadata, review workbooks, local inventories, recovery archives and model weights are intentionally excluded. The source dataset is [Eries1506/nyishi-speed-tb-phase1](https://huggingface.co/datasets/Eries1506/nyishi-speed-tb-phase1); observe its license and attribution requirements. This repository does not grant a license to the dataset.
+![Phase 4 text lengths and repetition](assets/phase4/03_output_growth_and_repetition.png)
 
-## Running the historical code
+**Meaning:** excessively long output and repeated tokens explain some visible failures. A single-token run of one does not rule out phrase loops. Text length is not CER.
 
-Use Python 3.11 and the listed dependencies. This snapshot is not a standalone training package: historical recipes expect privately supplied files in their former layout, including `raw/A_narration`, `manifests`, `cleaning`, `metadata`, reconstruction evidence, and some original recovery inputs. A fresh raw download alone does not recreate those inputs. Source-recovery/dataset tests require those fixtures and should not be presented as passing without them. The local directory cleanup changed their locations; the historical code is retained here as a research record, not an already-integrated pipeline for that layout.
+### Figure: corrected stopping and Unicode flags
 
-The normalization and integrity unit tests can run without dataset fixtures. Notebooks also contain staged historical assumptions and must be inspected before execution. Their saved outputs are historical evidence; they do not make the older code directly runnable in the current streamlined layout. Some notebook outputs include small displayed transcript tables, while bulk datasets, audio payloads and review files remain outside this repository.
+![Phase 4 EOS, cap and Unicode flags](assets/phase4/04_stopping_and_unicode_flags.png)
 
-## Next experiment
+**Meaning:** six clips terminate with EOS; six reach the limit without EOS. Preserve those outputs and the one U+FFFD occurrence in baseline scoring.
 
-1. Review the remaining uncertain speaker/session grouping and the one repeated full-transcript prompt across proposed splits. Keep the 42 uncertain-symbol clips outside the first held-out evaluation under the documented conservative policy. Recheck that Phase 3.5B uses the intended local inputs.
-2. Freeze the selected Phase 3.5B train/validation/test membership, save versioned manifests and SHA-256 hashes, and record the final row/hour/component counts. Never revise the test split in response to model scores.
-3. In Phase 4, pin `neurlang/ipa-whisper-base` and its processor revision; check NFD IPA and combining-mark encode/decode round trips, label lengths, audio features and a batch-1 inference smoke test. Record actual GPU memory and runtime.
-4. Run an IPA-compatible zero-shot diagnostic, then a small supervised pilot using training data and validation for checkpoint choice. Evaluate the selected recipe once on the frozen test set using corpus-level NFD character error rate (CER). Compare later models on the same split and policy.
+### Figure: inference memory
 
-Do not infer linguistic correctness, tone recognition or model superiority from code checks or candidate membership.
+![Phase 4 inference memory](assets/phase4/05_inference_memory.png)
+
+**Meaning:** this inference setup fits on the measured T4. Fine-tuning memory and speed remain unmeasured.
+
+### What this means for the baseline
+
+**Phase 4 is complete for its engineering scope.** Poor zero-shot output is a baseline finding to measure, not a reason to delete difficult clips or remove IPA marks. All 12 sequences automatically selected an English prefix despite `language=None`; record this behavior without inventing a Nyishi language token. The broader Kaggle image still reports conflicts in unrelated installed applications.
+
+The export labels the measured run **v6**; the prepared source is **v7**, which removes an extra restart guard while retaining the corrected inference path. The exact executed Kaggle notebook has not been supplied locally. This repository provides the source and a separate report notebook with preserved, privacy-safe measured figures.
+
+<a href="docs/PHASE4_RESULTS_AGGREGATE.json"><ins>Aggregate metrics</ins></a> · <a href="docs/PHASE4_SMOKE_DIAGNOSTICS.json"><ins>Anonymous plot inputs</ins></a> · <a href="scripts/render_phase4_results.py"><ins>Rebuild the five public figures</ins></a>
+
+## Next steps: zero-shot validation baseline
+
+1. **Prepare inputs:** hash-check the frozen validation manifest and package its **732 clips / 1.881808 hours** privately for Kaggle. Verify audio/reference alignment.
+2. **Verify scoring:** check CER on known pairs, combining marks and empty predictions. Preserve spaces, marks and every example in the denominator.
+3. **Run a small validation preflight**, then all validation clips with resumable per-sample exports and the same pinned settings.
+4. **Report corpus CER:** S/D/I, reference-character denominator, clips/hours, decode failures, EOS/cap flags, runtime and memory. Repetition and U+FFFD count as output errors; CER can exceed 100%.
+5. **Begin supervised adaptation:** use a 1–2 hour training pilot; select checkpoints by validation CER and measure training memory before expanding.
+6. **Final evaluation:** reserve the 683 test clips until the selected recipe is ready. Any decoding-policy alternative is a documented validation experiment.
+
+No further general cleaning or split search is required to begin the baseline. Save the executed Kaggle notebook locally for provenance when available.
+
+## Historical Narration findings
+
+### Why the original splits were replaced
+
+- **57/60 public speaker IDs** appear in multiple original row splits, and **49/60** appear in all three.
+- Earlier grouping proposed 55 groups from 60 IDs, but name-based merges remain unverified.
+- Historical identity states: 5,712 `ok`, 622 `linked_to_pair`, 208 `multi_person`, 176 `uncertain_identity`.
+
+### Audio and transcript caveats
+
+- Source audio is 16 kHz mono PCM16. Three zero-frame clips and one duration-discrepancy clip remain preserved with exclusion/review reasons.
+- **708 clips exceed 30 s**, including 528 labelled clips. They remain in the master for possible aligned segmentation; do not truncate audio and retain a full reference.
+- Raw labels contain 107 code points in the wider labelled inventory. The Phase 2 candidate subset contains 102; these are different scopes.
+- Repeated ordinary spaces occur in 640 raw references. Historical A_v1/A_v2 labels differ in 51 strings; fewer flags do not prove correct linguistic conventions.
+- The signal audit found no decode failures, three empty clips and no nonempty all-zero clips. **104 recordings below −50 dBFS RMS** are level-review candidates, not automatic exclusions.
+
+### Preserved analysis evidence
+
+The local recovered notebooks preserve original analyses and outputs for thesis reporting. Public historical copies retain saved non-audio figures/tables; embedded audio remains local. Some historical public outputs contain small displayed transcript tables, but bulk datasets and private review evidence are not distributed. This Phase 4 release adds no transcript-bearing results.
+
+## Repository guide
+
+| Location | Purpose |
+|---|---|
+| `notebooks/Phase-0.ipynb` through `Phase-3.5B.ipynb` | Historical staged analyses and saved results |
+| `notebooks/Phase-4B-Kaggle-Smoke-Test.ipynb` | Current Kaggle engineering code |
+| `notebooks/Phase-4B-Results-Public.ipynb` | Public report with saved figures derived from the reviewed export |
+| `docs/PHASE4_RESULTS.md` | Full results, provenance, limitations and next actions |
+| `docs/PHASE4_RESULTS_AGGREGATE.json` | Machine-readable engineering findings |
+| `assets/phase4/` | Five current public plots, with anonymous example positions |
+| `scripts/render_phase4_results.py` | Rebuild plots from public numeric diagnostics |
+| `scripts/phase3_5b_proposal.py` | Historical deterministic split search; private inputs required |
+| `src/nyishi_asr/`, `run_preprocessing.py` | Historical reconstruction/integrity code |
+| `tests/` | Historical checks, some requiring private fixtures |
+
+### Rebuild Phase 4 figures
+
+```bash
+python scripts/render_phase4_results.py
+```
+
+Requires NumPy and Matplotlib. Reads only public JSON metrics and anonymous numeric diagnostics; performs no inference.
+
+### Running historical workflows
+
+Historical reconstruction code uses Python 3.11 and the root `requirements.txt`. That file describes the reconstruction environment, **not the Kaggle model stack**. Older workflows expect private inputs in their former layout; a raw download alone does not recreate every fixture. Saved outputs are historical evidence, not a claim that every old workflow runs unchanged today. Dataset-dependent tests have not been rerun in this publication.
+
+## Data access and limitations
+
+Audio, bulk transcripts, private manifests, speaker/reviewer metadata, workbooks, local inventories, raw generation tokens, result ZIPs and weights remain outside this release. The dataset is <a href="https://huggingface.co/datasets/Eries1506/nyishi-speed-tb-phase1"><ins>Eries1506/nyishi-speed-tb-phase1</ins></a>; observe its license and attribution terms. This repository grants no dataset rights.
+
+**Scientific limitations:** unresolved label/identity uncertainty, no expert Nyishi adjudication, recording-month distribution shift, prompt overlap on distinct audio, and no held-out model accuracy result yet. Engineering checks do not establish tone recognition, linguistic correctness or model superiority.

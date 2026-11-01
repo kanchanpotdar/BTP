@@ -28,29 +28,40 @@
   "set_aside_failed_checks": 0,
   "smoke_audio_count": 12,
   "smoke_audio_seconds": 128.2169375,
-  "generation_wall_seconds": 18.82453762099999,
-  "peak_allocated_gpu_mib": 339.2607421875,
-  "peak_reserved_gpu_mib": 362.0,
+  "generation_wall_seconds": 19.41307299099998,
+  "peak_allocated_gpu_mib": 380.57373046875,
+  "peak_reserved_gpu_mib": 408.0,
+  "length_limit_hits": 6,
+  "possible_truncations": 6,
+  "predictions_ending_with_eos": 6,
+  "predictions_with_replacement_characters": 1,
   "repeat_generation_identical": true,
   "checkpoint_save_reload_identical": true,
   "cer_computed": false,
-  "status": "core_engineering_passed_stopping_diagnostics_need_reverification",
-  "measured_notebook_revision": "2026-11-01-v5",
-  "prepared_notebook_revision": "2026-11-01-v6 (not run)",
-  "returned_content_token_length_counts": {
-    "445": 6,
-    "other": 6
+  "status": "phase4_engineering_complete_with_model_quality_limitations",
+  "reported_run_revision": "2026-11-01-v6",
+  "published_source_revision": "2026-11-01-v7",
+  "revision_note": "ZIP reports v6; current prepared source is v7 with the same full-sequence generation path and restart-guard removal. The exact executed notebook was not supplied.",
+  "source_results_zip_sha256": "d59a0a45ca215f390ee8264ffc73d31130d2a8d4f69117b5e9ec73a7aaca474d",
+  "decoded_predictions_unchanged_from_previous_tensor_path": 12,
+  "frozen_manifest_hashes_verified": true,
+  "smoke_membership_verified_in_frozen_train": true,
+  "pip_check_passed": false,
+  "pip_check_note": "Conflicts in other preinstalled Kaggle applications were recorded; the imported ASR stack matches the pinned versions and passed the measured checks.",
+  "reference_max_content_tokens": {
+    "frozen_pool": 358,
+    "set_aside_symbol_review": 361
   },
-  "consecutive_identical_token_run_maxima": [
+  "automatic_language_prefix": {
+    "token": "<|en|>",
+    "observed_clips": 12,
+    "explicit_language_setting": null
+  },
+  "longest_identical_token_runs_top3": [
     419,
     376,
     211
   ],
-  "replacement_character_predictions": 1,
-  "stopping_metrics_valid": false,
-  "generation_termination_note": "Default Whisper tensor excludes prefix and EOS; prior zero cap/EOS flags are invalid. Six 445-content-token outputs suggest cap hits; raw full-sequence verification remains pending.",
-  "pip_check_passed": false,
-  "pip_check_note": "Preinstalled applications report dependency conflicts. Imported/installed Transformers agree and measured ASR engineering checks passed.",
   "timing_note": "Loop includes repeated first inference, audio/features and incremental exports; excludes model loading and save/reload.",
-  "accuracy_note": "No Nyishi fine-tuning or held-out CER run; training-only smoke examples show substantial omissions and repetition."
+  "accuracy_note": "No held-out CER or Nyishi fine-tuning has run. Repetition/omissions remain model failures to retain in baseline scoring."
 }
