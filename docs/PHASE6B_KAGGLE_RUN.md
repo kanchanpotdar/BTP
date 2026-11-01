@@ -2,6 +2,8 @@
 
 Phase 6A passed its two-update training and checkpoint-resume engineering gate. Phase 6B is the planned **controlled one-hour supervised pilot**. It starts again from the pinned pretrained IPA-Whisper Base checkpoint, trains on a fixed subset of the frozen training split, and selects an epoch by corpus CER on the **entire 732-clip validation set**. It does not use the 683-clip test set or carry Phase 6A weights forward.
 
+**Local preflight:** notebook cells parse; both actual ZIPs were extracted and checked, including all 1,320 listed payload hashes, all 1,313 audio files (16 kHz mono and within the declared clip window), reference normalization, and the 64,137-character validation denominator. The pinned model/AMP training loop and Kaggle environment have **not** been executed for Phase 6B; treat the GPU run as the final compatibility check.
+
 ## Private inputs to upload
 
 Create **two private Kaggle Datasets** and attach both with **Add Input**:
