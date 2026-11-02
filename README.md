@@ -16,11 +16,12 @@ The repository separates measured results from proposals and keeps the final tes
 | Frozen split | Accepted and locally hashed | `phase3_5b_v1`: 3,629 / 732 / 683 clips |
 | Processor/model engineering | Passed | Phase 4 reports |
 | B0 zero-shot validation | Complete | 732/732 validation clips; 103.13% corpus CER |
-| Phase 6A training smoke | Passed | Two finite AMP updates and checkpoint resume |
-| Phase 6B P1 pilot | Complete | Best Epoch 3 CER 109.10%; B0 remains better |
-| Phase 6C validation optimization | Passed | Batch 8 exactly matches single-example outputs on the audit subset |
-| F1 full fine-tuning | Not run | Next required experiment |
-| LoRA comparison and final test | Not run | Later phases |
+| Phase 6A training smoke | Passed | Two finite AMP updates and checkpoint resume; no accuracy metric was produced |
+| Phase 6B P1 pilot | Complete | Best Epoch 3 CER 107.26%; B0 remained better; insertion-heavy |
+| Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
+| Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty ablation reached 48.55% |
+| LoRA comparison | Not run | Matched follow-up experiment remains |
+| Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
 ## Frozen data contract
 
@@ -143,14 +144,24 @@ The repository separates measured results from proposals and keeps the final tes
 
 **Meaning of the result.** Phase 6A answered “can the supervised training loop update and resume safely?” It did not answer “does the model recognize Nyishi IPA?” The lower loss on the second update is therefore an engineering observation, not a generalization result.
 
+**Plots.** No privacy-safe accuracy plot was produced for Phase 6A because it used eight training clips only and did not run validation. Its evidence is the aggregate engineering report and checkpoint-resume checks.
+
 ### Phase 6B — P1 controlled pilot
 
 - Trained independently from the pinned pretrained checkpoint on 581 training clips for three epochs.
 - Validation covered all 732 clips after every epoch.
-- CER improved during the pilot from 149.92% to 109.10%, but did not beat B0's 103.13%.
+- CER improved during the pilot from 159.66% to the latest verified Epoch 3 value of 107.26%, but did not beat B0's 103.13%.
 - Epoch 3 remained insertion-heavy, so the pilot demonstrates learning but not a finished recipe.
 
 **Figure and result interpretation.** The falling training loss and falling validation CER show that the model learned from the supervised subset. However, Epoch 3 still remained worse than B0 and had many insertions, so “learning occurred” must not be reported as “the model is accurate.”
+
+![Phase 6B learning and validation](assets/phase6b/phase6b_learning_and_validation.png)
+
+**Figure interpretation — learning and validation.** This plot shows the P1 training-loss curve beside validation CER and generation diagnostics. It demonstrates learning on the one-hour pilot, but the best P1 CER remained above B0, so it was a pilot for recipe validation rather than the final model.
+
+![Phase 6B best CER by duration](assets/phase6b/phase6b_best_cer_by_duration.png)
+
+**Figure interpretation — duration slices.** This plot shows how the selected P1 checkpoint behaved across duration bins. It is diagnostic only: the official selection criterion remains the full-validation corpus CER, not the best-looking subgroup.
 
 ### Phase 6C — validation optimization and F1 preparation
 
@@ -167,6 +178,8 @@ Batch 8 is the selected validation configuration. It preserved token IDs, decode
 **Figure interpretation.** The Phase 6C timing comparison is an engineering plot rather than an accuracy plot. Its purpose is to show that validation can be accelerated without changing predictions. The memory bars show the measured allocation on the T4 audit run; they are not a universal memory guarantee for every batch or software environment.
 
 Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/PHASE6C_EQUIVALENCE_AGGREGATE.json`](docs/PHASE6C_EQUIVALENCE_AGGREGATE.json).
+
+**Plots.** Phase 6C did not produce an accuracy plot because it was a 12-clip generation-equivalence and runtime audit. Its evidence is the timing/memory table and exact token/text/CER equality report; no plot was necessary to establish the gate.
 
 ## Phase 7 F1: full supervised fine-tuning
 
