@@ -1,6 +1,6 @@
 # Narration: next steps
 
-Updated 1 November 2026 after verification of the Phase 6A Kaggle export and preparation of the Phase 6B pilot.
+Updated 2 November 2026 after review of the completed Phase 6B P1 export.
 
 ## Completed evidence
 
@@ -11,13 +11,14 @@ Updated 1 November 2026 after verification of the Phase 6A Kaggle export and pre
 - The supplied executed notebook confirms checksum/scorer/FP32/processor gates and full B0 completion. Its four processor figures were recreated anonymously from hash-checked training WAVs, without model weights or inference. Phase 5B is complete for its declared scope.
 
 - **Phase 6A training smoke passed:** eight frozen-train clips, two actual FP16 AMP optimizer updates including checkpoint/resume, finite gradients, nonzero weight changes, and saved optimizer/scheduler/scaler/RNG state. No validation CER was measured. See [aggregate Phase 6A results](PHASE6A_RESULTS.md).
-- **Phase 6B is prepared, not run:** fixed 581-clip / 1.002867-hour train subset across all 15 training components, source notebook and [private Kaggle run guide](PHASE6B_KAGGLE_RUN.md). All 732 validation clips remain the evaluation set; test remains sealed.
+- **Phase 6B P1 completed:** 581 train clips / 1.002867 hours, three epochs, all 732 validation clips each epoch. The latest best CER is 107.26%; B0 remains 103.13%. Insertions remain the dominant Epoch 3 error class.
+- **Phase 6C is ready:** the P1 checkpoint is now available. The private validation-equivalence runner compares single-example with batch-4/batch-8 validation, but the equivalence gate has not yet run.
 
-## Next: controlled pilot
+## Next: validation optimization, then F1
 
-1. Upload the private Phase 6B train ZIP and existing private Phase 5A validation ZIP to Kaggle as two private datasets. Follow the guide's hash, label, model and policy checks.
-2. Train from pinned pretrained Base using the declared pilot recipe; evaluate every epoch on full validation in FP32 with the B0 greedy generation policy. The Phase 6A saved default forced-decoder configuration must not silently change validation decoding.
-3. Select by corpus CER, report S/D/I and all denominators, inspect private error samples, and measure complete runtime and memory. Do not infer pilot performance from training loss alone.
-4. If stable, start F1 independently on all 3,629 frozen training clips, then compare LoRA as planned. Keep the 683 test clips untouched until final selection.
+1. Run the private Phase 6C audit notebook with the P1 checkpoint and validation bundle.
+2. Require exact token/text/CER equality for a batched validator before changing the F1 evaluator.
+3. If it passes, run F1 independently on all 3,629 frozen training clips. Keep the 683 test clips untouched until final selection.
+4. Run LoRA only as a matched follow-up comparison.
 
-Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. No Phase 6B, F1, LoRA or final-test result has been measured.
+Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. F1, LoRA and final-test results remain unmeasured.

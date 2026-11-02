@@ -15,14 +15,14 @@ This project builds a Nyishi speech-to-IPA baseline, then measures whether super
 | Phase 5A validation-input preparation | **Completed and independently verified**; private bundle verified and used for B0 |
 | Phase 5B B0 validation CER | **732/732 scored; 103.13% CER; reporting corrected** |
 | Phase 6A training smoke | **Passed** on eight frozen-train clips: two verified optimizer updates across save/reload; no CER |
-| Phase 6B P1 pilot | **Prepared, not run**: 581 train clips / 1.002867 h; full 732-clip validation planned |
+| Phase 6B P1 pilot | **Completed**: 581 train clips / 1.002867 h; best Epoch 3 validation CER 107.26% |
 | Full Nyishi fine-tuning and final test evaluation | **Not run** |
 
-**Latest finding:** the full B0 zero-shot validation measurement is complete: **66,144 edits / 64,137 NFD reference code points = 103.13% CER** over **732 clips / 1.881808 hours**. This is poor recognition under the declared IPA policy. **130 outputs hit the 448-token cap without EOS; 52 contain U+FFFD.** All remain scored. Corrected metrics and six full-validation plots were regenerated from saved predictions without model inference. The supplied executed notebook confirms the processor/scorer/runtime gates; four anonymous processor illustrations are now included. Phase 6A has since passed its training engineering gate, while the Phase 6B accuracy pilot remains unrun.
+**Latest finding:** B0 scored **103.13% CER** over **732 clips / 1.881808 hours**. The latest P1 pilot reached **107.26% CER** at Epoch 3 after three epochs on a one-hour nested training subset. Training loss, stopping behavior and insertion counts improved, but P1 did not yet beat B0. Phase 6C must verify batched validation equivalence before F1.
 
 ### Navigate
 
-[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Phase 5B](#phase-5b-b0-full-validation-zero-shot-baseline) · [Phase 6A](#phase-6a-supervised-training-smoke) · [Phase 6B](#phase-6b-controlled-p1-pilot-prepared) · [Next steps](#next-steps-after-the-pilot)
+[Phase 0](#phase-0-inventory-and-local-setup) · [Phase 1](#phase-1-eligibility-and-audio-checks) · [Phase 2](#phase-2-transcript-formatting) · [Phase 2.5](#phase-25-targeted-review) · [Phase 3](#phase-3-first-group-split-proposal) · [Phase 3.5](#phase-35-category-aware-revision) · [Phase 3.5B](#phase-35b-accepted-and-frozen-split) · [Phase 4](#phase-4-processor-and-model-smoke-test) · [Phase 5A](#phase-5a-validation-input-preparation) · [Phase 5B](#phase-5b-b0-full-validation-zero-shot-baseline) · [Phase 6A](#phase-6a-supervised-training-smoke) · [Phase 6B](#phase-6b-controlled-p1-pilot) · [Next steps](#next-steps-after-the-pilot)
 
 <a href="notebooks/Phase-4B-Results-Public.ipynb"><ins>Open the Phase 4 results notebook with saved figures</ins></a> · <a href="docs/PHASE4_RESULTS.md"><ins>Read the full Phase 4 report</ins></a>
 
@@ -370,17 +370,17 @@ The [source notebook](notebooks/Phase-6A-Kaggle-Training-Smoke.ipynb) and [Kaggl
 
 The FP16 AMP forward/backward, finite gradients, actual weight changes and save/reload of optimizer, scheduler, scaler and RNG state passed. Both updates reused the same eight clips, so lower second-pass loss is **not evidence of generalization**. These timings exclude setup, model load and checkpoint I/O. The saved model generation default differs from B0's explicit unforced decoding; Phase 6B must override that default for comparable validation CER. The executed notebook, training-state ZIP and weights remain private.
 
-## Phase 6B: controlled P1 pilot prepared
+## Phase 6B: controlled P1 pilot
 
-The [pilot notebook](notebooks/Phase-6B-Kaggle-Pilot.ipynb), [private-bundle builder](scripts/prepare_phase6b_pilot.py) and [Kaggle run guide](docs/PHASE6B_KAGGLE_RUN.md) are prepared; **no Phase 6B training or CER result exists yet**. The deterministic nested pilot subset contains **581 full frozen-train clips / 1.002867 hours / all 15 training components**. It is checked against the private frozen manifest and hashed source WAVs. The existing B0 validation bundle supplies **all 732 clips / 1.881808 hours / 64,137 reference code points**; the test set is excluded.
+The latest private P1 run used **581 full frozen-train clips / 1.002867 hours / all 15 training components** and evaluated all **732 validation clips / 1.881808 hours / 64,137 reference code points** each epoch. Its best Epoch 3 CER was **107.26%**, compared with B0's 103.13%. The privacy-safe aggregate report is [PHASE6B_RESULTS.md](docs/PHASE6B_RESULTS.md), with machine-readable values in [PHASE6B_RESULTS_AGGREGATE.json](docs/PHASE6B_RESULTS_AGGREGATE.json) and the report notebook [Phase-6B-Results-Public.ipynb](notebooks/Phase-6B-Results-Public.ipynb). Private predictions, audio, manifests, weights and training state remain excluded.
 
-The declared pilot begins independently from pinned `neurlang/ipa-whisper-base`, uses FP16 AMP training with a provisional three-epoch maximum, evaluates each epoch in FP32 under B0's exact greedy decoding/text policy, and saves resumable checkpoints. Select the minimum full-validation corpus CER, then inspect errors and measured runtime/memory before deciding on the full 10.851637-hour F1 run. No improvement or GPU runtime is claimed in advance.
+The pilot began independently from pinned `neurlang/ipa-whisper-base`, used FP16 AMP training with a three-epoch maximum, evaluated each epoch in FP32, and saved resumable private checkpoints. Validation dominated runtime: about 38.2 of 39.7 recorded minutes.
 
 ## Next steps: after the pilot
 
-1. Upload the two **private** ZIPs named in the Phase 6B guide to Kaggle and run the hash/target preflight, then the pilot. Keep predictions, transcripts, IDs, audio, manifests and weights outside GitHub.
-2. Review the full-validation CER curve, S/D/I counts, decode failures, capped outputs and a small private sample of errors against B0's 103.13% CER. Preserve label uncertainty and difficult examples.
-3. If the recipe and resource cost are stable, run F1 on all **3,629 train clips / 10.851637 h** from the original pinned pretrained checkpoint, then the matched LoRA comparison. Reserve **683 frozen test clips** for final evaluation after validation selection.
+1. Complete the private validation-equivalence audit with the recovered P1 checkpoint before changing the F1 evaluator.
+2. If exact batched-generation equivalence passes, start F1 independently on all **3,629 train clips / 10.851637 h**.
+3. Run LoRA only as a matched follow-up. Reserve **683 frozen test clips** for final evaluation after validation selection.
 
 Unresolved label/identity uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication remain limitations.
 

@@ -22,7 +22,8 @@ The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” 
 | Measured generation limitations | 6/12 EOS endings; 6/12 full 448-token cap hits without EOS; one U+FFFD output |
 | Model results | B0 full validation: 732 clips, 103.12924% corpus CER; test untouched |
 | Phase 6A | Two finite FP16 AMP updates on 8 frozen-train clips, including checkpoint/resume; no CER |
-| Phase 6B | Deterministic 581-clip / 1.002867 h subset prepared; pilot not run |
+| Phase 6B | Completed: 581-clip / 1.002867 h pilot; best Epoch 3 CER 107.25790%; test untouched |
+| Phase 6C | Private validation-equivalence audit is prepared; checkpoint recovered; audit not yet run |
 
 About 10.85 training hours justify a controlled transfer-learning experiment. Improvement, unseen-speaker generalization and tone recognition remain empirical questions. Preserve the frozen allocation rather than rounding away 0.85 hours or generating a new split. Known structural leakage checks pass; identity/label uncertainty, month shift and prompt overlap remain limitations.
 
@@ -164,7 +165,7 @@ Use the contract in `docs/PHASE4_ZERO_SHOT_PROTOCOL.md`: corpus **code-point CER
 
 ## Immediate next action
 
-Run the prepared [Phase 6B Kaggle pilot](docs/PHASE6B_KAGGLE_RUN.md) using the private fixed one-hour frozen-train bundle and the existing 732-clip Phase 5A validation bundle. The [source notebook](notebooks/Phase-6B-Kaggle-Pilot.ipynb) verifies hashes/targets, trains from the pinned pretrained Base, evaluates every epoch with the exact B0 policy, and checkpoints. The Phase 6A [aggregate review](docs/PHASE6A_RESULTS.md) passed its training smoke gate but produced no CER. Do not use test or claim pilot quality until an executed export is checked.
+Complete the private Phase 6C validation-equivalence audit with the recovered P1 Epoch 3 checkpoint before starting F1. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
 
 ## Reproducibility, scope and handoff
 

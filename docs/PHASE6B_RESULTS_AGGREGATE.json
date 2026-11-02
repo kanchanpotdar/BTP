@@ -1,0 +1,28 @@
+{
+  "experiment": "P1",
+  "status": "complete",
+  "scope": "Phase 6B one-hour frozen-train pilot",
+  "model_id": "neurlang/ipa-whisper-base",
+  "model_revision": "949f7c4e4ee374b5202bc5886f6e4552e5ae2371",
+  "gpu": "Tesla T4",
+  "train_clips": 581,
+  "train_hours": 1.002866944444444,
+  "validation_clips": 732,
+  "validation_hours": 1.8818083506944443,
+  "reference_codepoints": 64137,
+  "max_epochs": 3,
+  "completed_steps": 219,
+  "best_epoch": 3,
+  "b0_cer_percent": 103.1292389728238,
+  "best_validation_cer_percent": 107.25790105555295,
+  "test_data_used": false,
+  "total_wall_seconds": 2380.2742032080005,
+  "peak_allocated_mib": 2118.9755859375,
+  "peak_reserved_mib": 2370.0,
+  "history": [
+    {"epoch": 1, "training_loss": 3.9480874141057334, "validation_cer_percent": 159.65823159798555, "substitutions": 37834, "deletions": 2617, "insertions": 61949, "cap_without_eos": 200, "replacement_character_outputs": 21, "validation_seconds": 896.380809746},
+    {"epoch": 2, "training_loss": 2.2933112630729413, "validation_cer_percent": 129.71607652369147, "substitutions": 30859, "deletions": 2659, "insertions": 49678, "cap_without_eos": 122, "replacement_character_outputs": 22, "validation_seconds": 722.5073494409999},
+    {"epoch": 3, "training_loss": 1.8836888281750106, "validation_cer_percent": 107.25790105555295, "substitutions": 28536, "deletions": 2763, "insertions": 37493, "cap_without_eos": 93, "replacement_character_outputs": 19, "validation_seconds": 671.886445985}
+  ],
+  "publication_note": "Aggregate-only release. Audio, manifests, IDs, references, per-clip predictions, checkpoints and training state remain private."
+}
