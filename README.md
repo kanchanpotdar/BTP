@@ -61,7 +61,11 @@ The repository separates measured results from proposals and keeps the final tes
 
 ![Phase 3 split sizes](assets/phase3_split_sizes.png)
 
+**Figure interpretation — split sizes.** This figure compares the number of clips and hours assigned to the first train, validation, and test proposal. It is a planning diagnostic: a numerically large split is not automatically a representative split.
+
 ![Phase 3 category balance](assets/phase3_category_balance.png)
+
+**Figure interpretation — category balance.** These panels show why the proposal was rejected. Short clips and recording-month composition were uneven across held-out sets, creating a risk that the model would be evaluated on a different recording regime from the one it learned.
 
 ### Phase 3.5 — category-aware revision
 
@@ -70,7 +74,11 @@ The repository separates measured results from proposals and keeps the final tes
 
 ![Phase 3.5 split comparison](assets/phase3_5_split_comparison.png)
 
+**Figure interpretation — revised split sizes.** The category-aware search moved whole components between partitions while preserving group integrity. The chart is useful for comparing candidate allocations, but the internal search objective alone was not sufficient for acceptance.
+
 ![Phase 3.5 category comparison](assets/phase3_5_category_comparison.png)
+
+**Figure interpretation — revised categories.** The revised candidate improved some numerical balance measures but concentrated validation in one component and one gender distribution. It was therefore rejected in favor of a more usable design.
 
 ### Phase 3.5B — accepted frozen split
 
@@ -79,12 +87,16 @@ The repository separates measured results from proposals and keeps the final tes
 
 ![Phase 3.5B proposal comparison](assets/phase3_5b_proposal_comparison.png)
 
+**Figure interpretation — accepted split comparison.** This is the final design comparison used to select `phase3_5b_v1`. It shows the trade-off between train capacity and held-out balance after enforcing component, speaker/session, and exact-audio separation. The split is frozen; it must not be redesigned after seeing model scores.
+
 ### Phase 4 — processor and model engineering
 
 - Verified processor/tokenizer round trips, feature shape and finiteness, model loading, generation configuration, and a training-only smoke path.
 - This phase established compatibility; it did not establish Nyishi accuracy.
 
 ![Phase 4 input and timing checks](assets/phase4/01_inputs_and_timing.png)
+
+**Figure interpretation — processor/model smoke checks.** The figure summarizes input duration coverage and basic timing behavior during the engineering smoke test. It establishes that the processor and model can accept the intended waveform format; it does not measure transcription quality.
 
 ### Phase 5A — validation-input preparation
 
@@ -101,15 +113,27 @@ The repository separates measured results from proposals and keeps the final tes
 
 ![B0 CER by duration](assets/phase5b/01_cer_by_duration.png)
 
+**Figure interpretation — CER by duration.** Each duration bin reports corpus CER for the validation clips in that bin. This shows whether errors are concentrated in short or long recordings, but bins with different reference-character totals should not be compared as if they had equal statistical weight.
+
 ![B0 CER by component](assets/phase5b/02_cer_by_component.png)
+
+**Figure interpretation — CER by anonymous component.** This plot checks whether the baseline behaves differently across recording components. Large differences may indicate acoustic, speaker/session, or data-distribution variation; they are diagnostic, not proof of a single cause.
 
 ![B0 edit counts](assets/phase5b/03_edit_counts.png)
 
+**Figure interpretation — edit composition.** Substitutions change one character into another, deletions omit reference characters, and insertions add extra characters. Insertions are a particularly important B0 failure signal because they indicate over-generation rather than only IPA symbol confusion.
+
 ![B0 generation diagnostics](assets/phase5b/04_generation_flags.png)
+
+**Figure interpretation — generation health.** These counts show how often decoding reached the token cap, produced replacement characters, or otherwise returned an unusual output. These outputs remain included in CER; they are not silently discarded.
 
 ![B0 CER by stopping behavior](assets/phase5b/05_cer_by_stopping.png)
 
+**Figure interpretation — stopping behavior.** The plot compares CER for EOS-terminated and cap-hit predictions. A higher cap-hit CER would indicate that failing to stop is associated with severe over-generation, but this remains an association rather than a causal diagnosis.
+
 ![B0 generation length](assets/phase5b/06_generation_length_distribution.png)
+
+**Figure interpretation — output lengths.** The length distribution reveals whether the decoder tends to produce short omissions, plausible-length strings, or unusually long continuations. The 448-token limit is an evaluation safeguard, not a claim that every clip should have that many tokens.
 
 ### Phase 6A — supervised training smoke
 
@@ -117,12 +141,16 @@ The repository separates measured results from proposals and keeps the final tes
 - Verified finite losses/gradients, nonzero parameter changes, and save/reload of optimizer, scheduler, scaler, and RNG state.
 - This passed the engineering gate but produced no validation CER.
 
+**Meaning of the result.** Phase 6A answered “can the supervised training loop update and resume safely?” It did not answer “does the model recognize Nyishi IPA?” The lower loss on the second update is therefore an engineering observation, not a generalization result.
+
 ### Phase 6B — P1 controlled pilot
 
 - Trained independently from the pinned pretrained checkpoint on 581 training clips for three epochs.
 - Validation covered all 732 clips after every epoch.
 - CER improved during the pilot from 149.92% to 109.10%, but did not beat B0's 103.13%.
 - Epoch 3 remained insertion-heavy, so the pilot demonstrates learning but not a finished recipe.
+
+**Figure and result interpretation.** The falling training loss and falling validation CER show that the model learned from the supervised subset. However, Epoch 3 still remained worse than B0 and had many insertions, so “learning occurred” must not be reported as “the model is accurate.”
 
 ### Phase 6C — validation optimization and F1 preparation
 
@@ -135,6 +163,8 @@ The audit compared single-example generation with batch 4 and batch 8 on a deter
 | Batch 8 | 5.14 s | 941.7 MiB | Exact match; 2.14× faster |
 
 Batch 8 is the selected validation configuration. It preserved token IDs, decoded text, normalized text, and aggregate S/D/I counts. The private examples still show repeated sequences, high insertions, and one no-EOS cap hit; these are model-error signals, not batching failures.
+
+**Figure interpretation.** The Phase 6C timing comparison is an engineering plot rather than an accuracy plot. Its purpose is to show that validation can be accelerated without changing predictions. The memory bars show the measured allocation on the T4 audit run; they are not a universal memory guarantee for every batch or software environment.
 
 Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/PHASE6C_EQUIVALENCE_AGGREGATE.json`](docs/PHASE6C_EQUIVALENCE_AGGREGATE.json).
 
@@ -153,6 +183,8 @@ F1 should start independently from the original pinned pretrained checkpoint.
 - Keep all predictions, manifests, audio, IDs, and weights private.
 
 The measured estimate is approximately **30–40 minutes for three epochs** on a comparable T4 after batched validation optimization. A ten-epoch run may take roughly **1.5–2.5 hours**, depending on clip lengths and checkpoint overhead.
+
+**How F1 will be interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run; if it continues improving through epoch 10, a later extension must be declared before it is executed.
 
 ## Reproducibility and privacy
 
