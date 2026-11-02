@@ -1,12 +1,12 @@
 # SPRINT_PLAN.md — Nyishi IPA baseline and efficient fine-tuning
 
-**Updated:** 1 November 2026. **Scope:** Dataset A Narration only. **First checkpoint:** `neurlang/ipa-whisper-base`.
+**Updated:** 2 November 2026. **Scope:** Dataset A Narration only. **First checkpoint:** `neurlang/ipa-whisper-base`.
 
 ## Objective and evidence status
 
 Build a reproducible zero-shot reference, then measure how much supervised Nyishi IPA adaptation improves validation CER. Measure memory and training time alongside quality; do not assume FP16, LoRA or quantization preserves accuracy without comparison.
 
-The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” is a proposal reviewed against local evidence. Its general sequence is adopted below; rounded/proposed data totals and unverified performance statements are replaced with the existing frozen-split facts. Subsequent checked artifacts now establish B0 and the Phase 6A training smoke; Phase 6B remains prepared and unrun.
+The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” is a proposal reviewed against local evidence. Its general sequence is adopted below; rounded/proposed data totals and unverified performance statements are replaced with the existing frozen-split facts. Checked exports establish B0, Phase 6A, P1, Phase 6C and F1; see the current phase reports and `docs/NEXT_STEPS.md`. Earlier configuration sections below retain the original planning context.
 
 | Item | Verified current state |
 |---|---|
@@ -23,7 +23,8 @@ The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” 
 | Model results | B0 full validation: 732 clips, 103.12924% corpus CER; test untouched |
 | Phase 6A | Two finite FP16 AMP updates on 8 frozen-train clips, including checkpoint/resume; no CER |
 | Phase 6B | Completed: 581-clip / 1.002867 h pilot; best Epoch 3 CER 107.25790%; test untouched |
-| Phase 6C | Private validation-equivalence audit is prepared; checkpoint recovered; audit not yet run |
+| Phase 6C | Passed: batch 8 matched single-example outputs on 12 clips; 2.14× faster |
+| Phase 7 F1 | Completed: six epochs; best Epoch 3 validation CER 51.34634%; test sealed |
 
 About 10.85 training hours justify a controlled transfer-learning experiment. Improvement, unseen-speaker generalization and tone recognition remain empirical questions. Preserve the frozen allocation rather than rounding away 0.85 hours or generating a new split. Known structural leakage checks pass; identity/label uncertainty, month shift and prompt overlap remain limitations.
 
@@ -44,8 +45,9 @@ Phases stay in sequential order. Completed evidence is reused; do not reopen Pha
 | 5A. Baseline input preparation | Verify/package frozen validation data, references and hashes privately | Exactly 732 validation IDs, aligned audio/references; no test audio | Completed: 732 clips, 1.881808 h, verified private ZIP |
 | 5B. Processor figures + B0 | Plot existing training smoke inputs; verify scoring; validation preflight and full zero-shot | Feature figures, tested CER logic, all validation outcomes with denominators and resumable exports | Completed: 732/732 validation clips; 103.12924% corpus CER |
 | 6A. Supervised training smoke | Verify collator/prefixes, FP16 forward/backward/update and true checkpoint resume | Finite loss/gradients, verified updates, valid targets, resume state | Core engineering gate passed; 8 clips, 2 updates, no CER |
-| 6B. P1 supervised pilot | Train a component-aware 1–2 h subset | Validation CER curve, sample decodes, measured VRAM/speed and stable checkpoints | Prepared: 581 clips / 1.002867 h / 15 components; not run |
-| 7A. F1 full fine-tuning | Train all 10.851637 h using validated recipe | Best checkpoint by validation CER, full config and resumable history | Essential; runtime estimated only after pilot |
+| 6B. P1 supervised pilot | Train a component-aware 1–2 h subset | Validation CER curve, sample decodes, measured VRAM/speed and stable checkpoints | Completed: 581 clips / 1.002867 h; best Epoch 3 validation CER 107.25790% |
+| 6C. Validation optimization | Compare single-example and batched generation | Exact token/text/S/D/I equivalence on 12 clips | Passed; batch 8 selected |
+| 7A. F1 full fine-tuning | Train all 10.851637 h using validated recipe | Best checkpoint by validation CER, full config and resumable history | Completed: six epochs; best Epoch 3 CER 51.34634%; summed epoch time 38.47 min |
 | 7B. L1 LoRA comparison | Same full training membership and evaluation contract; explicit adapter scope | CER/resource comparison and learning curves; recorded budgets | Recommended after F1; feasibility measured first |
 | 7C. D1 data scaling | Optional nested 1, 2.5, 5 and full 10.851637 h training subsets | Hashed memberships, data-efficiency curve, compute/exposure totals | Optional; do not delay first complete baseline |
 | 7D. S1 model scale | Conditional IPA-Whisper Small comparison | Newly pinned processor/model checks; matched data/scoring and documented budget | Conditional after Base evidence; Medium deferred |
@@ -165,7 +167,7 @@ Use the contract in `docs/PHASE4_ZERO_SHOT_PROTOCOL.md`: corpus **code-point CER
 
 ## Immediate next action
 
-Complete the private Phase 6C validation-equivalence audit with the recovered P1 Epoch 3 checkpoint before starting F1. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
+Complete the matched LoRA follow-up and select the final model/decoding set with validation only; F1 and Phase 6C are complete. See `docs/PHASE7_F1_RESULTS.md` and `docs/NEXT_STEPS.md`. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
 
 ## Reproducibility, scope and handoff
 

@@ -20,10 +20,14 @@ The effective generation policy was recorded explicitly: decoder start 50258, au
 
 The private diagnostic examples show a real mixture of errors: repeated syllable-like sequences, over-generation and high insertions on longer clips, and one 448-token no-EOS cap hit. This supports proceeding with the declared F1 run while keeping the existing decoding/scoring policy unchanged. It does not justify changing the CER contract or claiming that the remaining errors are purely tokenizer failures.
 
-## F1 configuration
+## F1 configuration (historical preparation)
 
 Start independently from the original pinned `neurlang/ipa-whisper-base` revision, not from P1. Use all 3,629 frozen training clips (10.851637 h), the same 732 validation clips, learning rate `1e-5`, AdamW weight decay `0.01`, FP16 AMP training, FP32 validation, effective batch 8, validation/checkpoint once per epoch, and three initial epochs. Use physical batch 2 with gradient accumulation 4 unless T4 measurements require the declared fallback batch 1/accumulation 8. Select the checkpoint by minimum full-validation corpus NFD CER; keep the 683-clip test split sealed.
 
 The measured Phase 6C result supports batched validation at batch 8. Actual F1 runtime must still be measured. A reasonable estimate is approximately **10 minutes training plus 18–20 minutes batched validation, plus setup/checkpoint overhead: about 30–40 minutes total** on a comparable T4. This is an estimate, not a guarantee.
 
 Evidence: `outputs/phase6c_audit_20261102/phase6c_equivalence.json` and the private diagnostic JSONL in the same directory.
+
+## Subsequent run
+
+F1 later used a maximum of 10 epochs with patience 3, completed six epochs, and selected Epoch 3. The initial three-epoch plan and runtime estimate above are historical. See [verified F1 results](PHASE7_F1_RESULTS.md).

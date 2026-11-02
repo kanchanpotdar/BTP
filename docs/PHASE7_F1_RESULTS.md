@@ -11,6 +11,8 @@ F1 started independently from the pinned `neurlang/ipa-whisper-base` checkpoint.
 - Maximum: 10 epochs; patience: 3 non-improving validation epochs.
 - Checkpoint selection: minimum full-validation corpus CER.
 
+Pinned model revision: `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`. Seed: 0. [Machine-readable results](PHASE7_F1_RESULTS_AGGREGATE.json) retain epoch denominators, S/D/I, runtime and configuration. The saved private result/audit exports and executed notebook were inspected; no training or inference was rerun for this publication.
+
 ## Epoch results
 
 | Epoch | Training loss | Validation CER | Insertions | Cap hits |
@@ -22,7 +24,7 @@ F1 started independently from the pinned `neurlang/ipa-whisper-base` checkpoint.
 | 5 | 0.613 | 51.51% | 12,741 | 0 |
 | 6 | 0.506 | 55.48% | 13,893 | 3 |
 
-The selected checkpoint is Epoch 3. Training loss continued to fall after Epoch 3 while validation CER oscillated and worsened, which is evidence for early stopping rather than a reason to select the final checkpoint.
+The selected checkpoint is Epoch 3: **32,932 edits / 64,137 reference code points**, comprising 15,940 substitutions, 4,323 deletions and 12,669 insertions. Training loss continued to fall after Epoch 3 while validation CER oscillated and worsened, which is evidence for early stopping rather than a reason to select the final checkpoint.
 
 ![F1 CER and training loss](../assets/phase7_f1/01_f1_cer_and_training_loss.png)
 
@@ -38,7 +40,7 @@ The selected checkpoint is Epoch 3. Training loss continued to fall after Epoch 
 
 ![F1 runtime and GPU memory](../assets/phase7_f1/04_runtime_and_gpu_memory.png)
 
-**Interpretation.** The run stayed comfortably within the T4 memory budget. Runtime was approximately 25.5 minutes for six completed epochs, including validation.
+**Interpretation.** The run stayed comfortably within the T4 memory budget. The six epoch durations sum to **2,308.25 seconds (38.47 minutes)**, including training and validation but excluding setup, checkpoint writes and restart downtime. The run resumed after Epoch 2; the exported `total_wall_seconds` of 1,528.74 seconds describes only the final session. A complete end-to-end wall time across both sessions is unavailable.
 
 ## Validation-only decoding audit
 
@@ -58,4 +60,4 @@ The mild repetition penalty is the selected validation candidate; the no-repeat 
 
 - Prediction-level files, audio, manifests, IDs, checkpoints, and provenance remain private.
 - The 683-clip test set has not been evaluated.
-- The next step is one final private test evaluation of B0 and the selected F1 configuration. No further F1 epoch tuning should occur after opening the test set.
+- Complete the planned matched LoRA comparison and predeclare the final model/decoding set using validation only before final private test evaluation of B0 and the selected supervised configuration(s). No further F1 epoch tuning should occur after opening the test set.

@@ -6,6 +6,8 @@ This repository documents a reproducible, Narration-only speech-recognition stud
 
 > How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
 
+**Updated 2 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md) and [machine-readable aggregate results](docs/PHASE7_F1_RESULTS_AGGREGATE.json).
+
 The repository separates measured results from proposals and keeps the final test split sealed until model selection is complete.
 
 ## Current status at a glance
@@ -23,6 +25,10 @@ The repository separates measured results from proposals and keeps the final tes
 | LoRA comparison | Not run | Matched follow-up experiment remains |
 | Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
+## Start here
+
+Public readers can inspect the chronological phase notebooks and saved plots without private data. For the current result, open the [F1 public results notebook](notebooks/Phase-7-F1-Results-Public.ipynb). To reproduce training with authorized private inputs, follow the [F1 Kaggle run guide](docs/PHASE7_F1_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Self-Contained-Kaggle.ipynb). These instructions were inspected here; training and inference were not rerun during this documentation sync.
+
 ## Frozen data contract
 
 - Scope: Dataset A Narration only; Dataset B YouTube is out of scope.
@@ -30,7 +36,7 @@ The repository separates measured results from proposals and keeps the final tes
 - Validation: **732 clips / 1.881808 hours**.
 - Test: **683 clips / 1.891057 hours**, sealed.
 - Known component, speaker-group, session, and exact-audio overlaps across the accepted split: zero.
-- Primary metric: corpus-level character error rate (CER) over NFD-normalized IPA strings, with substitutions, deletions, and insertions reported separately.
+- Primary metric: corpus-level character error rate (CER) over NFD-normalized IPA strings, with substitutions, deletions, and insertions reported separately. Apply NFD, outer trim, and repeated ordinary-space collapse to each reference and hypothesis; retain spaces and IPA marks. Sum per-clip edits over summed reference code points; lower CER is better and insertions can make CER exceed 100%.
 - Raw references and private manifests remain outside the public release.
 
 ## Phase chronology
@@ -183,7 +189,7 @@ Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/P
 
 ## Phase 7 F1: full supervised fine-tuning
 
-F1 should start independently from the original pinned pretrained checkpoint.
+F1 started independently from `neurlang/ipa-whisper-base` revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`, rather than from the P1 checkpoint.
 
 - All 3,629 frozen training clips.
 - Effective batch size 8: physical batch 2 with accumulation 4, with physical batch 1/accumulation 8 as the measured fallback.
@@ -217,9 +223,11 @@ The executed F1 run completed six epochs before patience-3 early stopping. The b
 
 After F1, a validation-only audit supplied an explicit attention mask and modern `task="transcribe"` configuration. It reproduced the original Epoch 3 predictions exactly on all 732 clips. A declared repetition-penalty ablation reached **48.55% CER**, with insertions falling from 12,669 to 11,117 and cap hits falling from 2 to 0. A no-repeat 3-gram rule worsened CER to 53.00% and was rejected.
 
+Epoch 3 has **32,932 edits / 64,137 reference code points**: 15,940 substitutions, 4,323 deletions and 12,669 insertions. The repetition-penalty candidate has **31,138 edits / 64,137**, under a separately tuned decoding configuration.
+
 The aggregate F1 report is [`docs/PHASE7_F1_RESULTS.md`](docs/PHASE7_F1_RESULTS.md), with the public results notebook at [`notebooks/Phase-7-F1-Results-Public.ipynb`](notebooks/Phase-7-F1-Results-Public.ipynb).
 
-The measured F1 runtime was approximately 25.5 minutes for six completed epochs on a T4. The earlier estimate of 30–40 minutes for three epochs was conservative.
+The six recorded epoch durations sum to **2,308.25 seconds (38.47 minutes)** on a T4, including training and validation but excluding setup, checkpoint writes and restart downtime. F1 resumed after Epoch 2. The exported wall-time field of 1,528.74 seconds (25.48 minutes) covers only the final session; it is not the full-run runtime.
 
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
@@ -237,6 +245,10 @@ The measured F1 runtime was approximately 25.5 minutes for six completed epochs 
 - `docs/` — phase reports, protocols, aggregate metrics, and next steps.
 - `assets/` — privacy-safe aggregate plots and processor illustrations.
 - `archive/kaggle_runs/` — local-only Kaggle notebooks and private run archives; not part of the public release.
+
+## Limitations
+
+Labels and proposed identities lack expert Nyishi adjudication. Recording-month shift and one overlapping prompt on distinct train/validation audio remain documented limitations. Validation improvements do not establish unseen-test performance or tone recognition. The 12-clip Phase 6C equivalence result is scoped to that checkpoint, sample and runtime.
 
 ## Next steps
 
