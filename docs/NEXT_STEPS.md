@@ -1,6 +1,6 @@
 # Narration: next steps
 
-Updated 2 November 2026 after reconciliation of the saved P1, F1 and F1 validation-audit exports.
+Updated 2 November 2026 after completion of Phase 7 F1 and its validation audit.
 
 ## Completed evidence
 
@@ -11,16 +11,15 @@ Updated 2 November 2026 after reconciliation of the saved P1, F1 and F1 validati
 - The supplied executed notebook confirms checksum/scorer/FP32/processor gates and full B0 completion. Its four processor figures were recreated anonymously from hash-checked training WAVs, without model weights or inference. Phase 5B is complete for its declared scope.
 
 - **Phase 6A training smoke passed:** eight frozen-train clips, two actual FP16 AMP optimizer updates including checkpoint/resume, finite gradients, nonzero weight changes, and saved optimizer/scheduler/scaler/RNG state. No validation CER was measured. See [aggregate Phase 6A results](PHASE6A_RESULTS.md).
-- **Phase 6B P1 completed:** 581 train clips / 1.002867 hours, three epochs, all 732 validation clips each epoch. CER improved from 159.66% to 107.26%; B0 remains better at 103.13%. Insertions remain the dominant Epoch 3 error class.
+- **Phase 6B P1 completed:** 581 train clips / 1.002867 hours, three epochs, all 732 validation clips each epoch. CER improved from 149.92% to 109.10%; B0 remains better at 103.13%. Insertions remain the dominant Epoch 3 error class.
 - **Phase 6C passed:** batch-4 and batch-8 validation matched single-example token/text/normalization and aggregate S/D/I results on the deterministic 12-clip audit. Batch 8 is selected; it was 2.14× faster than single-example generation with 941.7 MiB peak allocated memory. The private diagnostics show repeated sequences, high insertions and one cap-hit/no-EOS example.
+- **Phase 7 F1 completed:** full supervised fine-tuning used all 3,629 frozen training clips, with all 732 validation clips evaluated each epoch. Epoch 3 was selected by minimum corpus validation CER at **51.34634%** (15,940 substitutions, 4,323 deletions, 12,669 insertions; 730 EOS-terminated outputs; 2 cap hits). The run stopped after six epochs under the declared patience rule. See [Phase 7 F1 results](PHASE7_F1_RESULTS.md).
+- **Phase 7 validation audit completed:** re-decoding Epoch 3 with an explicit attention mask and `task="transcribe"` reproduced the original predictions on all 732 validation clips. A validation-only `repetition_penalty=1.05` ablation reduced CER to **48.54924%** and insertions to **11,117**; this is a candidate decoding policy, not a test result. `no_repeat_ngram_size=3` was worse and is not selected.
 
-- **Phase 7 F1 completed:** six epochs, patience-3 early stopping, best Epoch 3 **51.34634% CER** (32,932 / 64,137), all 732 validation clips. All 3,629 frozen training clips were used; the model started from the pinned pretrained Base. Summed epoch training/validation time was 38.47 minutes; the exported 25.48-minute wall field covers only the last resumed session.
-- **F1 validation decoding audit:** explicit attention mask/task reproduced original predictions on all 732 clips. Repetition penalty 1.05 reached **48.54920% CER** (31,138 / 64,137); no-repeat 3-gram worsened CER to 53.00%. These remain validation-only results. See [F1 report](PHASE7_F1_RESULTS.md) and [aggregates](PHASE7_F1_RESULTS_AGGREGATE.json).
+## Next: matched adaptation comparison, then sealed test
 
-## Next: matched comparison and final selection
+1. Run the matched LoRA comparison from the original pinned `neurlang/ipa-whisper-base` checkpoint, not from the F1 checkpoint. Keep the same 3,629/732 split, NFD normalization, CER implementation, and validation-only model selection.
+2. Compare LoRA with F1 Epoch 3 under both the declared primary decoding policy and the predeclared validation candidate `repetition_penalty=1.05`. Keep all prediction-level outputs, manifests and checkpoints private.
+3. Select one final configuration using validation CER and diagnostics. Only then evaluate once on the sealed 683-clip test set. Do not use test results to tune decoding or training.
 
-1. Run the planned LoRA follow-up independently from the pinned pretrained Base on the same frozen train/validation sets. Record training budget, decoding configuration and measured compute.
-2. Select model/checkpoint and decoding settings using validation only. Distinguish F1 primary greedy CER from the separately tuned repetition-penalty candidate.
-3. Predeclare the final comparison set, including B0, then prepare the private 683-clip test bundle and evaluate the selected configurations. Do not tune after opening test results.
-
-Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. LoRA and final-test results remain unmeasured. No test evaluation was performed during this repository sync.
+Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. The LoRA comparison and final test remain unmeasured. The repetition-penalty improvement is validation evidence only and must not be presented as held-out test performance.

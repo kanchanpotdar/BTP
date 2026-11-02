@@ -18,8 +18,8 @@ The saved model's `generation_config.json` includes `forced_decoder_ids=[[1,null
 
 The sprint plan also asks for illustrative target token IDs and a before/after reload generation-config log. The executed notebook records target lengths and policy but not those complete details. Record them privately as a pre-pilot addendum; do not rerun 6A training solely for documentation.
 
-## Next step
+## Next step at the time of this report
 
-Run the prepared [Phase 6B Kaggle pilot](PHASE6B_KAGGLE_RUN.md) from the original pinned pretrained Base checkpoint on the deterministic one-hour frozen-training subset. Evaluate every epoch on all 732 validation clips using the explicit B0 policy and select by corpus CER. Phase 6B has not run. F1 and final test remain unrun.
+The contemporaneous handoff was to run the prepared [Phase 6B Kaggle pilot](PHASE6B_KAGGLE_RUN.md) from the original pinned pretrained Base checkpoint on the deterministic one-hour frozen-training subset. That pilot, Phase 6C, and the subsequent Phase 7 F1 run are now complete; see [Phase 6B results](PHASE6B_RESULTS.md), [Phase 6C results](PHASE6C_RESULTS.md), and [Phase 7 F1 results](PHASE7_F1_RESULTS.md). The final test remains sealed.
 
 Private ZIP, executed notebook, token IDs, source mapping, weights and training state remain local. This report contains aggregate evidence only.

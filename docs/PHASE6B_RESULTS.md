@@ -20,6 +20,6 @@ The latest private rerun is the authoritative P1 artifact for any paired checkpo
 
 ## Interpretation and next step
 
-The pilot proves that the supervised pipeline learns the IPA target and reduces uncontrolled generation, but it does not establish that this one-hour recipe is sufficient. Phase 6C validation optimization must verify that batched generation produces exactly the same predictions and CER as the one-clip evaluator. After that gate passes, F1 can start independently from the original pretrained checkpoint on all 3,629 training clips. The 683 test clips remain sealed.
+The pilot proves that the supervised pipeline learns the IPA target and reduces uncontrolled generation, but it does not establish that this one-hour recipe is sufficient. At the time of this handoff, Phase 6C validation optimization was the next gate, followed by an independent F1 run on all 3,629 training clips. Those phases are now complete; the current next steps are recorded in [the living next-steps document](NEXT_STEPS.md). The 683 test clips remain sealed.
 
 This public report contains aggregate values and plots only. Private audio, manifests, identifiers, transcript-bearing predictions, checkpoints and training state are excluded.
