@@ -168,7 +168,7 @@ Batch 8 is the selected validation configuration. It preserved token IDs, decode
 
 Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/PHASE6C_EQUIVALENCE_AGGREGATE.json`](docs/PHASE6C_EQUIVALENCE_AGGREGATE.json).
 
-## F1: next supervised experiment
+## Phase 7 F1: full supervised fine-tuning
 
 F1 should start independently from the original pinned pretrained checkpoint.
 
@@ -182,9 +182,33 @@ F1 should start independently from the original pinned pretrained checkpoint.
 - Save resumable optimizer/scheduler/scaler/RNG state and epoch telemetry.
 - Keep all predictions, manifests, audio, IDs, and weights private.
 
-The measured estimate is approximately **30–40 minutes for three epochs** on a comparable T4 after batched validation optimization. A ten-epoch run may take roughly **1.5–2.5 hours**, depending on clip lengths and checkpoint overhead.
+The executed F1 run completed six epochs before patience-3 early stopping. The best checkpoint was **Epoch 3: 51.35% validation CER**, compared with B0's 103.13%. The model used all 3,629 training clips and all 732 validation clips; the test set remained sealed.
 
-**How F1 will be interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run; if it continues improving through epoch 10, a later extension must be declared before it is executed.
+![F1 CER and training loss](assets/phase7_f1/01_f1_cer_and_training_loss.png)
+
+**What this plot means.** Training loss falls steadily, but validation CER reaches its minimum at Epoch 3 and then oscillates. This is why the best validation checkpoint—not the final checkpoint—is selected.
+
+![F1 validation edit composition](assets/phase7_f1/02_validation_edit_composition.png)
+
+**What this plot means.** F1 reduces insertions strongly relative to B0, while substitutions remain the largest remaining error family at the selected epoch. The error breakdown is a diagnostic, not a change to the CER definition.
+
+![F1 generation health](assets/phase7_f1/03_generation_health.png)
+
+**What this plot means.** At Epoch 3, 730/732 validation clips ended with EOS, two reached the generation cap, and no replacement-character outputs were recorded. This indicates that stopping behavior is no longer the dominant failure mode.
+
+![F1 runtime and GPU memory](assets/phase7_f1/04_runtime_and_gpu_memory.png)
+
+**What this plot means.** The run stayed well within the T4 memory budget. Runtime includes training and batched validation, and is reported as an engineering measurement rather than a quality metric.
+
+### Validation decoding ablation
+
+After F1, a validation-only audit supplied an explicit attention mask and modern `task="transcribe"` configuration. It reproduced the original Epoch 3 predictions exactly on all 732 clips. A declared repetition-penalty ablation reached **48.55% CER**, with insertions falling from 12,669 to 11,117 and cap hits falling from 2 to 0. A no-repeat 3-gram rule worsened CER to 53.00% and was rejected.
+
+The aggregate F1 report is [`docs/PHASE7_F1_RESULTS.md`](docs/PHASE7_F1_RESULTS.md), with the public results notebook at [`notebooks/Phase-7-F1-Results-Public.ipynb`](notebooks/Phase-7-F1-Results-Public.ipynb).
+
+The measured F1 runtime was approximately 25.5 minutes for six completed epochs on a T4. The earlier estimate of 30–40 minutes for three epochs was conservative.
+
+**How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
 ## Reproducibility and privacy
 
@@ -203,9 +227,9 @@ The measured estimate is approximately **30–40 minutes for three epochs** on a
 
 ## Next steps
 
-1. Run F1 with the validated batch-8 evaluator and the frozen 3,629-clip training set.
-2. Select the best F1 checkpoint using validation CER only.
-3. Run the matched LoRA comparison as a separate experiment.
-4. Evaluate the preselected final comparison on the sealed 683-clip test set only after all validation decisions are complete.
+1. Run the matched LoRA comparison from the original pinned checkpoint.
+2. Select the F1/LoRA configuration using validation only.
+3. Prepare the private frozen 683-clip test bundle.
+4. Evaluate B0 and the selected supervised model once on the sealed test set.
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.

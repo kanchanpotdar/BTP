@@ -1,0 +1,6 @@
+{
+  "best_epoch": 3,
+  "best_CER_percent": 51.346336747899024,
+  "B0_CER_percent": 103.1292389728238,
+  "test_data_used": false
+}
