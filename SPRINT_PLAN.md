@@ -25,6 +25,7 @@ The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” 
 | Phase 6B | Completed: 581-clip / 1.002867 h pilot; best Epoch 3 CER 107.25790%; test untouched |
 | Phase 6C | Passed: batch 8 matched single-example outputs on 12 clips; 2.14× faster |
 | Phase 7 F1 | Completed: six epochs; best Epoch 3 validation CER 51.34634%; test sealed |
+| Phase 7 F1 decoding follow-up | Completed: penalty `1.08` selected at 48.39172% validation CER; test sealed |
 
 About 10.85 training hours justify a controlled transfer-learning experiment. Improvement, unseen-speaker generalization and tone recognition remain empirical questions. Preserve the frozen allocation rather than rounding away 0.85 hours or generating a new split. Known structural leakage checks pass; identity/label uncertainty, month shift and prompt overlap remain limitations.
 
@@ -48,6 +49,8 @@ Phases stay in sequential order. Completed evidence is reused; do not reopen Pha
 | 6B. P1 supervised pilot | Train a component-aware 1–2 h subset | Validation CER curve, sample decodes, measured VRAM/speed and stable checkpoints | Completed: 581 clips / 1.002867 h; best Epoch 3 validation CER 107.25790% |
 | 6C. Validation optimization | Compare single-example and batched generation | Exact token/text/S/D/I equivalence on 12 clips | Passed; batch 8 selected |
 | 7A. F1 full fine-tuning | Train all 10.851637 h using validated recipe | Best checkpoint by validation CER, full config and resumable history | Completed: six epochs; best Epoch 3 CER 51.34634%; summed epoch time 38.47 min |
+| 7A.1. F1 repetition-penalty sweep | Re-decode the frozen validation set from the selected Epoch 3 checkpoint with penalties `1.00`, `1.02`, `1.05`, `1.08`, `1.10`; change no other generation setting | All 732 clips per setting; corpus CER/S/D/I, EOS/cap/U+FFFD, output-length ratio, runtime, exact configuration and private predictions | In progress: `1.00` and `1.05` already verified; run the remaining declared values on Kaggle GPU |
+| 7A.2. F1 learning-rate mini-sweep | Repeat full F1 independently at `5e-6` and `2e-5`, retaining the existing `1e-5` reference and the selected validation decoding policy | Matched full-data validation curves, best checkpoints, compute and stability comparison | Planned; two-rate check before L1 LoRA |
 | 7B. L1 LoRA comparison | Same full training membership and evaluation contract; explicit adapter scope | CER/resource comparison and learning curves; recorded budgets | Recommended after F1; feasibility measured first |
 | 7C. D1 data scaling | Optional nested 1, 2.5, 5 and full 10.851637 h training subsets | Hashed memberships, data-efficiency curve, compute/exposure totals | Optional; do not delay first complete baseline |
 | 7D. S1 model scale | Conditional IPA-Whisper Small comparison | Newly pinned processor/model checks; matched data/scoring and documented budget | Conditional after Base evidence; Medium deferred |
@@ -63,11 +66,13 @@ Effort ranges are human preparation/review estimates, not GPU runtime promises o
 | B0 | Pinned IPA-Whisper Base, zero-shot | None | Full frozen validation, FP32 | Essential first reference |
 | P1 | Base full fine-tuning, FP16 AMP | Fixed nested 1–2 h subset | Same full validation, FP32 | Essential pipeline/learning pilot |
 | F1 | Base full fine-tuning, FP16 AMP | All **10.851637 h** | Same validation; final test only after selection | Essential supervised reference |
+| F1-RP | Selected F1 Epoch 3 checkpoint; validation-only repetition-penalty sweep | No training | Same 732 validation clips; penalties `1.00`, `1.02`, `1.05`, `1.08`, `1.10`; all other decoding fields frozen | Immediate decoding-selection follow-up |
+| F1-LR | Base full fine-tuning with the existing recipe and one variable changed | Same **10.851637 h** | Same validation and selected decoding; compare `5e-6`, `1e-5`, `2e-5` | Recommended small optimization check |
 | L1 | Base LoRA, FP16 AMP | Same **10.851637 h** | Same validation and scoring | Recommended memory/quality comparison |
 | D1 | Base full fine-tuning, nested subsets | 1, 2.5, 5, **10.851637 h** | Identical validation | Optional thesis study |
 | S1 | `neurlang/ipa-whisper-small`, initially full AMP | Same full training set | Identical split/scoring; pin and verify independently | Conditional; no claim it is better |
 
-Order: **B0 → training smoke → P1 → F1 → L1 → optional D1/S1 → preselected final test**. A short LoRA engineering check may precede L1, but a brief pilot does not establish its final quality ranking.
+Order: **B0 → training smoke → P1 → F1 → F1-RP sweep → F1-LR mini-sweep → insertion diagnostics → L1 → final validation-only selection → optional D1/S1 → preselected final test**. A short LoRA engineering check may precede L1, but a brief pilot does not establish its final quality ranking.
 
 Each independent F1/L1/D1 comparison starts from the same pinned pretrained Base checkpoint. Do not silently warm-start F1 from P1 or larger D1 subsets from smaller-subset fine-tuned weights. Resume within an existing run is allowed and logged; warm-start studies are separate experiments.
 
@@ -167,7 +172,17 @@ Use the contract in `docs/PHASE4_ZERO_SHOT_PROTOCOL.md`: corpus **code-point CER
 
 ## Immediate next action
 
-Complete the matched LoRA follow-up and select the final model/decoding set with validation only; F1 and Phase 6C are complete. See `docs/PHASE7_F1_RESULTS.md` and `docs/NEXT_STEPS.md`. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
+Complete the post-F1 work in this declared order:
+
+1. Run **F1-RP** on Kaggle GPU from the saved F1 Epoch 3 checkpoint. Reuse and re-score the saved `1.00` and `1.05` predictions when their audit metadata and denominators verify; generation is still required for each missing penalty because a repetition penalty changes token probabilities during decoding and cannot be applied retrospectively to text.
+2. Keep greedy decoding, batch 8, FP32 inference, explicit attention masks, `task="transcribe"`, automatic language detection, `forced_decoder_ids=None`, `no_repeat_ngram_size=0`, the 448-token cap, suppression fields, normalization and CER implementation fixed. The only swept variable is `repetition_penalty` in `{1.00, 1.02, 1.05, 1.08, 1.10}`.
+3. Select the F1 decoding candidate by minimum validation corpus CER, while reporting S/D/I, EOS/cap/U+FFFD counts and prediction/reference length ratio. Treat the selected penalty as a validation-tuned candidate, not a final test result.
+4. Run the small full-fine-tuning learning-rate check at `5e-6` and `2e-5`, retaining the existing `1e-5` reference. Start each run from the original pinned pretrained checkpoint; do not warm-start from F1 Epoch 3.
+5. Inspect 30–50 insertion-heavy or otherwise pathological validation examples from the selected setting. Classify repetition, hallucinated continuation, weak/silent audio, label inconsistency and genuine acoustic/transcription error without deleting difficult examples.
+6. Run the independently initialized L1 LoRA comparison on the identical frozen train/validation contract. Compare both standard and selected decoding policies, then predeclare one final checkpoint and decoding configuration.
+7. Evaluate that locked configuration once on all 683 sealed test clips in Phase 8. Do not use test results to revise training or decoding.
+
+F1 and Phase 6C are complete. See `docs/PHASE7_F1_RESULTS.md` and `docs/NEXT_STEPS.md`. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
 
 ## Reproducibility, scope and handoff
 
@@ -182,3 +197,5 @@ For every actual run, save manifests/subset hashes, source/notebook hash, model/
 - [PyTorch 2.11 AMP examples](https://docs.pytorch.org/docs/2.11/notes/amp_examples.html): autocast, gradient scaling and accumulation mechanics.
 - [Transformers v4.57.1 GPU efficiency guide](https://github.com/huggingface/transformers/blob/v4.57.1/docs/source/en/perf_train_gpu_one.md): mixed precision, accumulation/checkpointing and their trade-offs.
 - 1 November 2026: revised with user-authorized experiment matrix, AMP/memory controls, processor figures, supervised-target/resume gates, full-vs-LoRA comparison, optional nested data scaling and group-aware uncertainty. Frozen splits/reference/evaluation policy are retained; no code, training or baseline was run by this plan edit.
+- 2 November 2026: added the post-F1 sequence and predeclared F1-RP sweep. Existing verified `1.00` and `1.05` results may be reused after integrity checks; missing penalties require checkpoint re-decoding on validation. The sealed test remains untouched.
+- 3 November 2026: completed the F1-RP sweep (selected penalty `1.08`, 48.39172% validation CER) and added the small two-rate F1 learning-rate check before L1.

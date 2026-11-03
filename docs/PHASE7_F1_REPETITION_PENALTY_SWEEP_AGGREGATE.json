@@ -1,0 +1,27 @@
+{
+  "experiment": "Phase 7 F1 validation-only repetition-penalty sweep",
+  "model_id": "neurlang/ipa-whisper-base",
+  "model_revision": "949f7c4e4ee374b5202bc5886f6e4552e5ae2371",
+  "validation_clips": 732,
+  "reference_codepoints": 64137,
+  "inference_precision": "float32",
+  "validation_batch": 8,
+  "test_data_used": false,
+  "generation_policy": {
+    "do_sample": false,
+    "num_beams": 1,
+    "max_length": 448,
+    "task": "transcribe",
+    "language": null,
+    "forced_decoder_ids": null,
+    "no_repeat_ngram_size": 0
+  },
+  "selected_repetition_penalty": 1.08,
+  "results": [
+    {"repetition_penalty": 1.0, "corpus_cer_percent": 51.34633674789903, "S": 15940, "D": 4323, "I": 12669, "edit_count": 32932, "eos_count": 730, "cap_without_eos": 2, "mean_prediction_reference_length_ratio": 1.1649606974487747},
+    {"repetition_penalty": 1.02, "corpus_cer_percent": 50.886383834604054, "S": 15290, "D": 4655, "I": 12692, "edit_count": 32637, "eos_count": 730, "cap_without_eos": 2, "mean_prediction_reference_length_ratio": 1.156840405385557},
+    {"repetition_penalty": 1.05, "corpus_cer_percent": 48.549199370098385, "S": 14785, "D": 5236, "I": 11117, "edit_count": 31138, "eos_count": 732, "cap_without_eos": 0, "mean_prediction_reference_length_ratio": 1.1334128901712175},
+    {"repetition_penalty": 1.08, "corpus_cer_percent": 48.391723965885525, "S": 14542, "D": 5739, "I": 10756, "edit_count": 31037, "eos_count": 732, "cap_without_eos": 0, "mean_prediction_reference_length_ratio": 1.1203863858530823},
+    {"repetition_penalty": 1.1, "corpus_cer_percent": 48.485273710962474, "S": 14513, "D": 6093, "I": 10491, "edit_count": 31097, "eos_count": 732, "cap_without_eos": 0, "mean_prediction_reference_length_ratio": 1.1142971745340005}
+  ]
+}

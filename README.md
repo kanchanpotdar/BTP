@@ -21,7 +21,7 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 6A training smoke | Passed | Two finite AMP updates and checkpoint resume; no accuracy metric was produced |
 | Phase 6B P1 pilot | Complete | Best Epoch 3 CER 107.26%; B0 remained better; insertion-heavy |
 | Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
-| Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty ablation reached 48.55% |
+| Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
 | LoRA comparison | Not run | Matched follow-up experiment remains |
 | Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
@@ -228,6 +228,35 @@ Epoch 3 has **32,932 edits / 64,137 reference code points**: 15,940 substitution
 The aggregate F1 report is [`docs/PHASE7_F1_RESULTS.md`](docs/PHASE7_F1_RESULTS.md), with the public results notebook at [`notebooks/Phase-7-F1-Results-Public.ipynb`](notebooks/Phase-7-F1-Results-Public.ipynb).
 
 The six recorded epoch durations sum to **2,308.25 seconds (38.47 minutes)** on a T4, including training and validation but excluding setup, checkpoint writes and restart downtime. F1 resumed after Epoch 2. The exported wall-time field of 1,528.74 seconds (25.48 minutes) covers only the final session; it is not the full-run runtime.
+### Phase 7 F1 repetition-penalty sweep
+
+The selected F1 Epoch 3 checkpoint was re-evaluated on all 732 validation clips
+with a predeclared sweep of `repetition_penalty` values `1.00`, `1.02`, `1.05`,
+`1.08`, and `1.10`. All other generation settings, normalization and CER
+scoring remained fixed; the test set was not used.
+
+| Penalty | Validation CER | Substitutions | Deletions | Insertions | Cap hits |
+|---:|---:|---:|---:|---:|---:|
+| 1.00 | 51.34634% | 15,940 | 4,323 | 12,669 | 2 |
+| 1.02 | 50.88638% | 15,290 | 4,655 | 12,692 | 2 |
+| 1.05 | 48.54920% | 14,785 | 5,236 | 11,117 | 0 |
+| **1.08** | **48.39172%** | **14,542** | **5,739** | **10,756** | **0** |
+| 1.10 | 48.48527% | 14,513 | 6,093 | 10,491 | 0 |
+
+Penalty `1.08` is the validation-selected candidate. It reduces decoder
+over-generation relative to `1.00`, but its margin over `1.05` is only 0.1575
+absolute CER points. This is not a test-set result or a claim of statistically
+significant generalization.
+
+![Repetition penalty CER comparison](assets/phase7_f1_repetition_penalty/01_cer_comparison.png)
+
+![Repetition penalty edit composition](assets/phase7_f1_repetition_penalty/03_error_composition_percent.png)
+
+![Repetition penalty generation health](assets/phase7_f1_repetition_penalty/05_generation_health.png)
+
+![Repetition penalty selection dashboard](assets/phase7_f1_repetition_penalty/07_selection_dashboard.png)
+
+See the full public report at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), aggregate data at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json), and the public notebook at [`notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb`](notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb).
 
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
@@ -252,9 +281,10 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 
 ## Next steps
 
-1. Run the matched LoRA comparison from the original pinned checkpoint.
-2. Select the F1/LoRA configuration using validation only.
-3. Prepare the private frozen 683-clip test bundle.
-4. Evaluate B0 and the selected supervised model once on the sealed test set.
+1. Run the small predeclared full-fine-tuning learning-rate comparison (`5e-6` and `2e-5`) while retaining the existing `1e-5` F1 reference.
+2. Run the matched LoRA comparison independently from the original pinned checkpoint; do not force LoRA to use the full-fine-tuning learning rate.
+3. Select the F1/LoRA configuration and decoding setting using validation only.
+4. Prepare the private frozen 683-clip test bundle.
+5. Evaluate B0 and the selected supervised model once on the sealed test set.
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.
