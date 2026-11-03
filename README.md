@@ -6,7 +6,7 @@ This repository documents a reproducible, Narration-only speech-recognition stud
 
 > How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
 
-**Updated 2 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md) and [machine-readable aggregate results](docs/PHASE7_F1_RESULTS_AGGREGATE.json).
+**Updated 3 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_RESULTS_AGGREGATE.json).
 
 The repository separates measured results from proposals and keeps the final test split sealed until model selection is complete.
 
