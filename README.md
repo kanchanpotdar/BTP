@@ -43,23 +43,88 @@ Public readers can inspect the chronological phase notebooks and saved plots wit
 
 ### Phase 0 — inventory and local setup
 
-- Audited the master Dataset A source and identified labelled, missing, long, and undecodable records.
-- Preserved raw audio, IDs, transcripts, review fields, and provenance.
+- **Purpose:** establish what is available before any filtering, transcript editing, or model work.
+- The source-of-truth Narration master contained **6,718 rows and 54 columns**, and matched the 59 raw Narration shards row-for-row.
+- The inventory recorded raw audio locations, transcript fields, duration basis, speaker/session fields, review flags, and provenance without rewriting the source.
+- Dataset B (YouTube) was explicitly kept out of the first baseline scope.
+- The initial audit identified **5,651 rows with a non-empty reference**, **708 clips flagged longer than 30 seconds in the inventory**, and **three zero-frame recordings**. These are inventory facts, not deletion instructions.
+
+| Inventory item | Measured value | Why it mattered |
+|---|---:|---|
+| Dataset A Narration master rows | 6,718 | Complete starting population |
+| Master columns | 54 | Preserved metadata, transcript, review, and provenance fields |
+| Rows with a usable-looking reference | 5,651 | Upper bound before audio/duration checks |
+| Clips flagged over 30 seconds in the inventory | 708 | Must be segmented deliberately; never silently truncated |
+| Zero-frame recordings | 3 | Require exclusion from the first supervised candidate view and retention in the audit |
+
+![Narration source inventory](assets/narration_inventory.svg)
+
+**Figure interpretation — source inventory.** This is a data-inventory illustration, not a model result. It shows the relationship between the preserved Narration source, derived audit tables, and later candidate/split views. The important design decision was to keep the master and its provenance intact while making versioned derived artifacts.
 
 ### Phase 1 — eligibility and audio checks
 
-- Built the structurally valid labelled candidate view.
-- Recorded duration, frame, decoding, and transcript eligibility facts without deleting source records.
+- **Purpose:** apply explicit first-pass rules to create a candidate pool for later grouping and split design.
+- The master and full-decode audit joined one-to-one (**6,718 / 6,718**). There were no full-decode failures and no sample-rate or channel-count disagreements.
+- Every row received a reason and boolean flags; source rows were not deleted. The first applicable reason was used for the mutually exclusive waterfall below.
+
+| First-pass outcome | Clips | Decoded hours remaining | Interpretation |
+|---|---:|---:|---|
+| All master rows | 6,718 | 25.792 | Starting population |
+| After missing/empty reference | 5,651 | 20.877 | 1,067 rows had no usable reference |
+| After zero-frame check | 5,648 | 20.877 | Three labelled rows had no decoded frames |
+| After audio-issue review hold | 5,647 | 20.876 | One duration-discrepancy record was held for review |
+| After the 0.5–30 s rule | **5,086** | **14.826** | Initial structurally valid candidate pool |
+
+The 5,086 candidates were not yet the train/validation/test split. They were the input to transcript normalization, review queues, and group-aware split construction. The duration rule excluded 561 rows in the mutually exclusive waterfall. The detailed Phase 1 review counted **528 reference-present clips over 30 seconds**; this is narrower than the Phase 0 inventory flag because Phase 1 applies the usable-reference predicate before describing labelled durations. Short-clip and other edge-case flags were retained in the all-row audit. Long recordings remained preserved for future alignment-aware segmentation.
+
+![Phase 1 eligibility reasons](assets/phase1_eligibility_reasons.png)
+
+![Phase 1 duration distribution](assets/phase1_duration_distribution.png)
+
+![Phase 1 candidate hours by speaker](assets/phase1_speaker_hours.png)
+
+![Phase 1 speaker status](assets/phase1_speaker_status.png)
+
+**Figure interpretation — Phase 1 plots.** The eligibility chart explains why rows leave the first candidate view; it is not a quality score. The duration plot shows why the 30-second boundary was treated as a preparation rule rather than a truncation rule. The speaker-hour and speaker-status plots show that the 5,086 candidates were not automatically safe for random splitting: the largest public speaker IDs contributed a disproportionate share of hours, and **967 candidates were marked train-only**. That evidence motivated the group-aware split work in Phase 3.
 
 ### Phase 2 — transcript formatting
 
-- Created a derived normalized view using Unicode NFD, outer trimming, and repeated ordinary-space collapse.
-- Retained raw strings beside normalized strings.
+- **Purpose:** define a conservative, reproducible text representation for tokenizer checks and CER without making linguistic substitutions.
+- Input: the 5,086 Phase 1 candidates. The approved policy was:
+
+| Operation | Applied? | Effect |
+|---|---|---|
+| Unicode NFD | Yes | Makes combining-mark representation consistent |
+| Trim outer whitespace | Yes | Removes accidental leading/trailing whitespace |
+| Collapse repeated ordinary U+0020 spaces | Yes | Removes formatting-only repeated spaces |
+| Rewrite IPA symbols, diacritics, punctuation, or tone marks | **No** | Linguistic meaning remains unchanged |
+| Preserve `transcript_raw` beside the derived label | **Yes** | Every transformation remains auditable |
+
+- **497 rows** changed under the final mechanical policy; all 497 changes were repeated ordinary-space cleanup. NFD alone changed zero rows, and no normalized label became empty.
+- The inventory contained **102 distinct raw and normalized code points**. The normalized labels contained 521,747 code points, including IPA combining marks; these counts describe Unicode code points, not phonemes.
+- The policy was idempotent: applying it a second time produced the same normalized label. No model tokenizer or split assignment was used in this phase.
+
+![Phase 2 normalization and label length](assets/phase2_normalization_and_length.png)
+
+![Phase 2 duration versus label length](assets/phase2_duration_vs_label_length.png)
+
+**Figure interpretation — Phase 2 plots.** These figures describe the text representation before training. One compares raw and normalized label-length distributions; the other relates decoded duration to reference length. They are useful for spotting formatting changes and unusually long/short examples, but they are not evidence of recognition accuracy. The downstream CER contract uses the same NFD, outer-trim, and repeated-space policy for references and hypotheses.
 
 ### Phase 2.5 — targeted review
 
-- Produced review queues for symbols, audio quality, speaker/session uncertainty, and possible curation decisions.
-- Review queues were treated as uncertainty records, not automatic deletion rules.
+- **Purpose:** isolate small, high-impact uncertainties before constructing speaker/session-disjoint splits.
+- A targeted symbol queue contained **42 clips (0.201 decoded hours)**: 3 with `:`, 20 with `;`, 19 with `[`, plus one combining-acute case. Categories overlap, so their bars must not be added together.
+- A separate group-readiness review covered **five proposed speaker-ID merges**, **nine train-only/proposed groups**, **1,745 recording sessions**, and **398 repeated normalized transcript rows**. Repeated text was not treated as duplicate audio.
+- The 967 train-only candidates represented **2.474 hours** and were kept out of automatic held-out assignment. Exact-audio duplicate grouping and final split assignment were deliberately deferred to Phase 3.
+- Review queues preserved exact source locators privately, but no automatic linguistic correction, speaker merge, or split decision was applied here.
+
+![Phase 2.5 review workload](assets/phase2_5_review_workload.png)
+
+**Figure interpretation — review workload.** This plot is a queue-sizing and risk-management view. It shows which symbol classes and proposed group workloads needed human attention; it does not claim that those symbols were wrong or that proposed speaker merges were true identities. The practical outcome was a clean handoff to group-aware split construction with uncertainty explicitly recorded.
+
+### What these four phases established
+
+The early pipeline moved from **6,718 preserved source rows** to **5,086 mechanically eligible candidates**, while keeping the rejected/uncertain records and their reasons available for audit. Phase 0 measured the population, Phase 1 made audio/reference eligibility explicit, Phase 2 fixed only formatting-level transcript variation, and Phase 2.5 surfaced human-review and leakage risks. None of these phases produced a model accuracy result; they made the later frozen split and CER comparison scientifically interpretable.
 
 ### Phase 3 — first group split proposal
 
