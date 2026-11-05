@@ -6,7 +6,7 @@ This repository documents a reproducible, Narration-only speech-recognition stud
 
 > How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
 
-**Updated 5 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [learning-rate comparison](docs/PHASE7_F1_LR_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json).
+**Documentation reviewed 6 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [learning-rate comparison](docs/PHASE7_F1_LR_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json).
 
 The repository separates measured results from proposals and keeps the final test split sealed until model selection is complete.
 
@@ -23,7 +23,7 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
 | Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
-| LoRA comparison | Not run | Matched follow-up experiment remains |
+| LoRA comparison | In progress; no selected result yet | [Self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb); complete saved results still required |
 | Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
 ## Start here
@@ -41,6 +41,10 @@ Public readers can inspect the chronological phase notebooks and saved plots wit
 - Raw references and private manifests remain outside the public release.
 
 ## Phase chronology
+
+Each phase presents its measured outcome, supporting figures, and interpretation. Candidate split figures document historical decisions; Phase 3.5B defines the frozen benchmark.
+
+---
 
 ### Phase 0 — inventory and local setup
 
@@ -60,7 +64,9 @@ Public readers can inspect the chronological phase notebooks and saved plots wit
 
 ![Narration source inventory](assets/narration_inventory.svg)
 
-**Figure interpretation — source inventory.** This is a data-inventory illustration, not a model result. It shows the relationship between the preserved Narration source, derived audit tables, and later candidate/split views. The important design decision was to keep the master and its provenance intact while making versioned derived artifacts.
+**Figure — Narration source inventory.** Summarizes the source collection before exclusions and split design. Inventory counts should not be read as model-training counts.
+
+---
 
 ### Phase 1 — eligibility and audio checks
 
@@ -80,13 +86,23 @@ The 5,086 candidates were not yet the train/validation/test split. They were the
 
 ![Phase 1 eligibility reasons](assets/phase1_eligibility_reasons.png)
 
+**Figure — Eligibility reasons.** Shows which mechanical checks limited the candidate pool. These are rule-based counts, not judgements that excluded audio is linguistically unusable.
+
 ![Phase 1 duration distribution](assets/phase1_duration_distribution.png)
+
+**Figure — Clip-duration distribution.** Shows how recording lengths vary and why the first Whisper recipe uses a bounded short-clip candidate pool.
 
 ![Phase 1 candidate hours by speaker](assets/phase1_speaker_hours.png)
 
+**Figure — Speaker-hour distribution.** Shows uneven contribution across the available speaker metadata, a consideration for later group-disjoint evaluation.
+
 ![Phase 1 speaker status](assets/phase1_speaker_status.png)
 
+**Figure — Speaker metadata status.** Distinguishes recorded speaker information from missing or uncertain assignments; video identifiers were not treated as proof of identity.
+
 **Figure interpretation — Phase 1 plots.** The eligibility chart explains why rows leave the first candidate view; it is not a quality score. The duration plot shows why the 30-second boundary was treated as a preparation rule rather than a truncation rule. The speaker-hour and speaker-status plots show that the 5,086 candidates were not automatically safe for random splitting: the largest public speaker IDs contributed a disproportionate share of hours, and **967 candidates were marked train-only**. That evidence motivated the group-aware split work in Phase 3.
+
+---
 
 ### Phase 2 — transcript formatting
 
@@ -107,9 +123,15 @@ The 5,086 candidates were not yet the train/validation/test split. They were the
 
 ![Phase 2 normalization and label length](assets/phase2_normalization_and_length.png)
 
+**Figure — Normalization and label length.** Shows the effect of the declared mechanical text view and the spread of reference lengths. It does not imply linguistic correction of labels.
+
 ![Phase 2 duration versus label length](assets/phase2_duration_vs_label_length.png)
 
+**Figure — Audio duration versus label length.** Helps identify recordings whose text length warrants review; a point away from the main trend is a review cue, not an automatic deletion.
+
 **Figure interpretation — Phase 2 plots.** These figures describe the text representation before training. One compares raw and normalized label-length distributions; the other relates decoded duration to reference length. They are useful for spotting formatting changes and unusually long/short examples, but they are not evidence of recognition accuracy. The downstream CER contract uses the same NFD, outer-trim, and repeated-space policy for references and hypotheses.
+
+---
 
 ### Phase 2.5 — targeted review
 
@@ -121,60 +143,130 @@ The 5,086 candidates were not yet the train/validation/test split. They were the
 
 ![Phase 2.5 review workload](assets/phase2_5_review_workload.png)
 
+**Figure — Targeted review workload.** Summarizes the kinds of unresolved cases. Queue size indicates review effort, not the number of confirmed errors.
+
 **Figure interpretation — review workload.** This plot is a queue-sizing and risk-management view. It shows which symbol classes and proposed group workloads needed human attention; it does not claim that those symbols were wrong or that proposed speaker merges were true identities. The practical outcome was a clean handoff to group-aware split construction with uncertainty explicitly recorded.
 
 ### What these four phases established
 
 The early pipeline moved from **6,718 preserved source rows** to **5,086 mechanically eligible candidates**, while keeping the rejected/uncertain records and their reasons available for audit. Phase 0 measured the population, Phase 1 made audio/reference eligibility explicit, Phase 2 fixed only formatting-level transcript variation, and Phase 2.5 surfaced human-review and leakage risks. None of these phases produced a model accuracy result; they made the later frozen split and CER comparison scientifically interpretable.
 
+---
+
 ### Phase 3 — first group split proposal
 
 - Constructed indivisible groups from proposed speaker/session links and exact waveform duplicates.
 - Found zero known structural leakage but rejected the first proposal because short-clip and recording-month balance was unsuitable.
 
+| Check | Outcome |
+|---|---|
+| Known structural cross-split leakage | None detected in the proposal |
+| Balance decision | Rejected: short-clip and recording-month distributions were unsuitable |
+
 ![Phase 3 split sizes](assets/phase3_split_sizes.png)
 
-**Figure interpretation — split sizes.** This figure compares the number of clips and hours assigned to the first train, validation, and test proposal. It is a planning diagnostic: a numerically large split is not automatically a representative split.
+**Figure — split sizes.** This figure compares the number of clips and hours assigned to the first train, validation, and test proposal. It is a planning diagnostic: a numerically large split is not automatically a representative split.
 
 ![Phase 3 category balance](assets/phase3_category_balance.png)
 
-**Figure interpretation — category balance.** These panels show why the proposal was rejected. Short clips and recording-month composition were uneven across held-out sets, creating a risk that the model would be evaluated on a different recording regime from the one it learned.
+**Figure — category balance.** These panels show why the proposal was rejected. Short clips and recording-month composition were uneven across held-out sets, creating a risk that the model would be evaluated on a different recording regime from the one it learned.
+
+---
 
 ### Phase 3.5 — category-aware revision
 
 - Searched whole-component assignments while considering hours, month, age, duration, gender, and held-out balance.
 - Rejected the revision because validation was dominated by one component and female hours, despite a better internal search score.
 
+| Check | Outcome |
+|---|---|
+| Component integrity | Preserved during reassignment |
+| Balance decision | Rejected: validation concentration remained too high |
+
 ![Phase 3.5 split comparison](assets/phase3_5_split_comparison.png)
 
-**Figure interpretation — revised split sizes.** The category-aware search moved whole components between partitions while preserving group integrity. The chart is useful for comparing candidate allocations, but the internal search objective alone was not sufficient for acceptance.
+**Figure — revised split sizes.** The category-aware search moved whole components between partitions while preserving group integrity. The chart is useful for comparing candidate allocations, but the internal search objective alone was not sufficient for acceptance.
 
 ![Phase 3.5 category comparison](assets/phase3_5_category_comparison.png)
 
-**Figure interpretation — revised categories.** The revised candidate improved some numerical balance measures but concentrated validation in one component and one gender distribution. It was therefore rejected in favor of a more usable design.
+**Figure — revised categories.** The revised candidate improved some numerical balance measures but concentrated validation in one component and one gender distribution. It was therefore rejected in favor of a more usable design.
+
+---
 
 ### Phase 3.5B — accepted frozen split
 
 - Selected the more balanced split while preserving component/speaker/session/exact-audio separation.
 - Frozen membership and hashes are retained privately.
 
+| Frozen partition | Clips | Audio hours |
+|---|---:|---:|
+| Train | 3,629 | 10.851637 |
+| Validation | 732 | 1.881808 |
+| Test, sealed | 683 | 1.891057 |
+
 ![Phase 3.5B proposal comparison](assets/phase3_5b_proposal_comparison.png)
 
-**Figure interpretation — accepted split comparison.** This is the final design comparison used to select `phase3_5b_v1`. It shows the trade-off between train capacity and held-out balance after enforcing component, speaker/session, and exact-audio separation. The split is frozen; it must not be redesigned after seeing model scores.
+**Figure — accepted split comparison.** This is the final design comparison used to select `phase3_5b_v1`. It shows the trade-off between train capacity and held-out balance after enforcing component, speaker/session, and exact-audio separation. The split is frozen; it must not be redesigned after seeing model scores.
+
+---
 
 ### Phase 4 — processor and model engineering
 
 - Verified processor/tokenizer round trips, feature shape and finiteness, model loading, generation configuration, and a training-only smoke path.
 - This phase established compatibility; it did not establish Nyishi accuracy.
 
+| Engineering check | Observed result |
+|---|---|
+| Label tokenizer checks | 5,086 candidate labels checked |
+| Audio/feature smoke | 12 training-only clips |
+| Full-sequence generation | EOS and cap diagnostics recorded; no validation score |
+
 ![Phase 4 input and timing checks](assets/phase4/01_inputs_and_timing.png)
 
-**Figure interpretation — processor/model smoke checks.** The figure summarizes input duration coverage and basic timing behavior during the engineering smoke test. It establishes that the processor and model can accept the intended waveform format; it does not measure transcription quality.
+**Figure — processor/model smoke checks.** The figure summarizes input duration coverage and basic timing behavior during the engineering smoke test. It establishes that the processor and model can accept the intended waveform format; it does not measure transcription quality.
+
+![02 token lengths](assets/phase4/02_token_lengths.png)
+
+**Figure — Target token lengths.** Shows whether references fit the decoder target budget before training.
+
+![03 output growth and repetition](assets/phase4/03_output_growth_and_repetition.png)
+
+**Figure — Output growth and repetition.** Diagnoses repeated output in the training-only smoke test; this is not a validation score.
+
+![04 stopping and unicode flags](assets/phase4/04_stopping_and_unicode_flags.png)
+
+**Figure — Stopping and Unicode flags.** Shows EOS, cap-hit, and replacement-character behavior in the engineering smoke test.
+
+![05 inference memory](assets/phase4/05_inference_memory.png)
+
+**Figure — Inference memory.** Shows measured device memory for the smoke run; hardware-specific.
+
+---
 
 ### Phase 5A — validation-input preparation
 
 - Prepared and independently checked the private 732-clip validation bundle.
 - Confirmed waveform hashes, audio decoding, references, and the 64,137-code-point denominator.
+
+| Validation-bundle check | Result |
+|---|---:|
+| Verified clips | 732 |
+| Audio duration | 1.881808 h |
+| Normalized reference code points | 64,137 |
+
+![01 validation duration and reference length](assets/phase5a/01_validation_duration_and_reference_length.png)
+
+**Figure — Validation duration and reference length.** Describes the held-out clips and the text-length distribution behind the CER denominator.
+
+![02 validation component hours](assets/phase5a/02_validation_component_hours.png)
+
+**Figure — Validation component hours.** Shows audio-hours distribution across anonymous groups without exposing identities.
+
+![03 validation metadata coverage](assets/phase5a/03_validation_metadata_coverage.png)
+
+**Figure — Validation metadata coverage.** Indicates available descriptive fields; absent attributes are not inferred.
+
+---
 
 ### Phase 5B — B0 full-validation zero-shot baseline
 
@@ -184,29 +276,38 @@ The early pipeline moved from **6,718 preserved source rows** to **5,086 mechani
 - Diagnostics: 130 generation-cap hits without EOS and 52 U+FFFD-containing outputs.
 - Corrected plots were regenerated from saved predictions; inference was not rerun.
 
+| B0 validation measure | Result |
+|---|---:|
+| Coverage | 732 / 732 clips |
+| Corpus CER | 103.12924% |
+| Substitutions / deletions / insertions | 36,780 / 4,171 / 25,193 |
+| No-EOS cap hits / U+FFFD outputs | 130 / 52 |
+
 ![B0 CER by duration](assets/phase5b/01_cer_by_duration.png)
 
-**Figure interpretation — CER by duration.** Each duration bin reports corpus CER for the validation clips in that bin. This shows whether errors are concentrated in short or long recordings, but bins with different reference-character totals should not be compared as if they had equal statistical weight.
+**Figure — CER by duration.** Each duration bin reports corpus CER for the validation clips in that bin. This shows whether errors are concentrated in short or long recordings, but bins with different reference-character totals should not be compared as if they had equal statistical weight.
 
 ![B0 CER by component](assets/phase5b/02_cer_by_component.png)
 
-**Figure interpretation — CER by anonymous component.** This plot checks whether the baseline behaves differently across recording components. Large differences may indicate acoustic, speaker/session, or data-distribution variation; they are diagnostic, not proof of a single cause.
+**Figure — CER by anonymous component.** This plot checks whether the baseline behaves differently across recording components. Large differences may indicate acoustic, speaker/session, or data-distribution variation; they are diagnostic, not proof of a single cause.
 
 ![B0 edit counts](assets/phase5b/03_edit_counts.png)
 
-**Figure interpretation — edit composition.** Substitutions change one character into another, deletions omit reference characters, and insertions add extra characters. Insertions are a particularly important B0 failure signal because they indicate over-generation rather than only IPA symbol confusion.
+**Figure — edit composition.** Substitutions change one character into another, deletions omit reference characters, and insertions add extra characters. Insertions are a particularly important B0 failure signal because they indicate over-generation rather than only IPA symbol confusion.
 
 ![B0 generation diagnostics](assets/phase5b/04_generation_flags.png)
 
-**Figure interpretation — generation health.** These counts show how often decoding reached the token cap, produced replacement characters, or otherwise returned an unusual output. These outputs remain included in CER; they are not silently discarded.
+**Figure — generation health.** These counts show how often decoding reached the token cap, produced replacement characters, or otherwise returned an unusual output. These outputs remain included in CER; they are not silently discarded.
 
 ![B0 CER by stopping behavior](assets/phase5b/05_cer_by_stopping.png)
 
-**Figure interpretation — stopping behavior.** The plot compares CER for EOS-terminated and cap-hit predictions. A higher cap-hit CER would indicate that failing to stop is associated with severe over-generation, but this remains an association rather than a causal diagnosis.
+**Figure — stopping behavior.** The plot compares CER for EOS-terminated and cap-hit predictions. A higher cap-hit CER would indicate that failing to stop is associated with severe over-generation, but this remains an association rather than a causal diagnosis.
 
 ![B0 generation length](assets/phase5b/06_generation_length_distribution.png)
 
-**Figure interpretation — output lengths.** The length distribution reveals whether the decoder tends to produce short omissions, plausible-length strings, or unusually long continuations. The 448-token limit is an evaluation safeguard, not a claim that every clip should have that many tokens.
+**Figure — output lengths.** The length distribution reveals whether the decoder tends to produce short omissions, plausible-length strings, or unusually long continuations. The 448-token limit is an evaluation safeguard, not a claim that every clip should have that many tokens.
+
+---
 
 ### Phase 6A — supervised training smoke
 
@@ -218,6 +319,14 @@ The early pipeline moved from **6,718 preserved source rows** to **5,086 mechani
 
 **Plots.** No privacy-safe accuracy plot was produced for Phase 6A because it used eight training clips only and did not run validation. Its evidence is the aggregate engineering report and checkpoint-resume checks.
 
+| Training-loop check | Measured result |
+|---|---:|
+| Frozen training examples in probe | 8 |
+| Finite optimizer updates | 2, including resumed update |
+| Validation CER | Not measured |
+
+---
+
 ### Phase 6B — P1 controlled pilot
 
 - Trained independently from the pinned pretrained checkpoint on 581 training clips for three epochs.
@@ -227,13 +336,21 @@ The early pipeline moved from **6,718 preserved source rows** to **5,086 mechani
 
 **Figure and result interpretation.** The falling training loss and falling validation CER show that the model learned from the supervised subset. However, Epoch 3 still remained worse than B0 and had many insertions, so “learning occurred” must not be reported as “the model is accurate.”
 
+| Pilot epoch | Training loss | Validation CER | Insertions | No-EOS cap hits |
+|---:|---:|---:|---:|---:|
+| 1 | 3.948 | 159.66% | 61,949 | 200 |
+| 2 | 2.293 | 129.72% | 49,678 | 122 |
+| **3** | **1.884** | **107.26%** | **37,493** | **93** |
+
 ![Phase 6B learning and validation](assets/phase6b/phase6b_learning_and_validation.png)
 
-**Figure interpretation — learning and validation.** This plot shows the P1 training-loss curve beside validation CER and generation diagnostics. It demonstrates learning on the one-hour pilot, but the best P1 CER remained above B0, so it was a pilot for recipe validation rather than the final model.
+**Figure — learning and validation.** This plot shows the P1 training-loss curve beside validation CER and generation diagnostics. It demonstrates learning on the one-hour pilot, but the best P1 CER remained above B0, so it was a pilot for recipe validation rather than the final model.
 
 ![Phase 6B best CER by duration](assets/phase6b/phase6b_best_cer_by_duration.png)
 
-**Figure interpretation — duration slices.** This plot shows how the selected P1 checkpoint behaved across duration bins. It is diagnostic only: the official selection criterion remains the full-validation corpus CER, not the best-looking subgroup.
+**Figure — duration slices.** This plot shows how the selected P1 checkpoint behaved across duration bins. It is diagnostic only: the official selection criterion remains the full-validation corpus CER, not the best-looking subgroup.
+
+---
 
 ### Phase 6C — validation optimization and F1 preparation
 
@@ -253,7 +370,9 @@ Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/P
 
 **Plots.** Phase 6C did not produce an accuracy plot because it was a 12-clip generation-equivalence and runtime audit. Its evidence is the timing/memory table and exact token/text/CER equality report; no plot was necessary to establish the gate.
 
-## Phase 7 F1: full supervised fine-tuning
+---
+
+### Phase 7 F1 — full supervised fine-tuning
 
 F1 started independently from `neurlang/ipa-whisper-base` revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`, rather than from the P1 checkpoint.
 
@@ -271,21 +390,21 @@ The executed F1 run completed six epochs before patience-3 early stopping. The b
 
 ![F1 CER and training loss](assets/phase7_f1/01_f1_cer_and_training_loss.png)
 
-**What this plot means.** Training loss falls steadily, but validation CER reaches its minimum at Epoch 3 and then oscillates. This is why the best validation checkpoint—not the final checkpoint—is selected.
+**Figure — Training versus validation.** Training loss falls steadily, but validation CER reaches its minimum at Epoch 3 and then oscillates. This is why the best validation checkpoint—not the final checkpoint—is selected.
 
 ![F1 validation edit composition](assets/phase7_f1/02_validation_edit_composition.png)
 
-**What this plot means.** F1 reduces insertions strongly relative to B0, while substitutions remain the largest remaining error family at the selected epoch. The error breakdown is a diagnostic, not a change to the CER definition.
+**Figure — Validation edit composition.** F1 reduces insertions strongly relative to B0, while substitutions remain the largest remaining error family at the selected epoch. The error breakdown is a diagnostic, not a change to the CER definition.
 
 ![F1 generation health](assets/phase7_f1/03_generation_health.png)
 
-**What this plot means.** At Epoch 3, 730/732 validation clips ended with EOS, two reached the generation cap, and no replacement-character outputs were recorded. This indicates that stopping behavior is no longer the dominant failure mode.
+**Figure — Generation health.** At Epoch 3, 730/732 validation clips ended with EOS, two reached the generation cap, and no replacement-character outputs were recorded. This indicates that stopping behavior is no longer the dominant failure mode.
 
 ![F1 runtime and GPU memory](assets/phase7_f1/04_runtime_and_gpu_memory.png)
 
-**What this plot means.** The run stayed well within the T4 memory budget. Runtime includes training and batched validation, and is reported as an engineering measurement rather than a quality metric.
+**Figure — Runtime and GPU memory.** The run stayed well within the T4 memory budget. Runtime includes training and batched validation, and is reported as an engineering measurement rather than a quality metric.
 
-### Validation decoding ablation
+#### Validation decoding ablation
 
 After F1, a validation-only audit supplied an explicit attention mask and modern `task="transcribe"` configuration. It reproduced the original Epoch 3 predictions exactly on all 732 clips. A declared repetition-penalty ablation reached **48.55% CER**, with insertions falling from 12,669 to 11,117 and cap hits falling from 2 to 0. A no-repeat 3-gram rule worsened CER to 53.00% and was rejected.
 
@@ -294,7 +413,11 @@ Epoch 3 has **32,932 edits / 64,137 reference code points**: 15,940 substitution
 The aggregate F1 report is [`docs/PHASE7_F1_RESULTS.md`](docs/PHASE7_F1_RESULTS.md), with the public results notebook at [`notebooks/Phase-7-F1-Results-Public.ipynb`](notebooks/Phase-7-F1-Results-Public.ipynb).
 
 The six recorded epoch durations sum to **2,308.25 seconds (38.47 minutes)** on a T4, including training and validation but excluding setup, checkpoint writes and restart downtime. F1 resumed after Epoch 2. The exported wall-time field of 1,528.74 seconds (25.48 minutes) covers only the final session; it is not the full-run runtime.
-### Phase 7 F1 repetition-penalty sweep
+---
+
+#### Phase 7 F1 repetition-penalty sweep
+
+The [self-contained Kaggle sweep notebook](notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Kaggle.ipynb) contains the declared generation settings and export cells; the [public results notebook](notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb) reads only aggregate metrics and public plots.
 
 The selected F1 Epoch 3 checkpoint was re-evaluated on all 732 validation clips
 with a predeclared sweep of `repetition_penalty` values `1.00`, `1.02`, `1.05`,
@@ -316,15 +439,24 @@ significant generalization.
 
 ![Repetition penalty CER comparison](assets/phase7_f1_repetition_penalty/01_cer_comparison.png)
 
+**Figure — Penalty versus CER.** Compares corpus validation CER for the declared values 1.00, 1.02, 1.05, 1.08, and 1.10; the minimum is at 1.08.
+
 ![Repetition penalty edit composition](assets/phase7_f1_repetition_penalty/03_error_composition_percent.png)
+
+**Figure — Error composition.** Shows the trade-off among substitutions, deletions, and insertions as the penalty rises; suppressing insertions alone does not guarantee the lowest CER.
 
 ![Repetition penalty generation health](assets/phase7_f1_repetition_penalty/05_generation_health.png)
 
+**Figure — Generation health.** Compares EOS and generation-cap behavior across the same validation clips.
+
 ![Repetition penalty selection dashboard](assets/phase7_f1_repetition_penalty/07_selection_dashboard.png)
 
+**Figure — Decoding selection dashboard.** Brings CER and generation diagnostics together for the validation-only selection at 1.08.
 See the full public report at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), aggregate data at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json), and the public notebook at [`notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb`](notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb).
 
-### Phase 7 F1 learning-rate mini-sweep
+---
+
+#### Phase 7 F1 learning-rate mini-sweep
 
 Two independent full-data F1 runs were completed at learning rates `5e-6` and
 `2e-5`, retaining the existing `1e-5` result as the reference. Both runs used
@@ -347,11 +479,15 @@ performance.
 
 ![Learning-rate comparison dashboard](assets/phase7_f1_learning_rate/lr_sweep_comparison_dashboard.png)
 
+**Figure — Learning-rate comparison.** Summarizes the independently trained full-data runs; 2e-5 reached the lowest validation CER.
+
 ![Learning-rate CER curves](assets/phase7_f1_learning_rate/cer_curves.png)
+
+**Figure — Validation CER by epoch.** Shows why each run is selected at its best epoch instead of its final epoch.
 
 ![Learning-rate training-loss curves](assets/phase7_f1_learning_rate/training_loss_curves.png)
 
-**Figure interpretation — learning-rate comparison.** The higher rate reaches a
+**Figure — Training loss by epoch.** Tracks optimization, while validation CER remains the model-selection criterion.
 lower validation CER and remains stable through Epoch 5, but later epochs
 degrade. The lower rate learns more slowly and does not beat the reference.
 Training loss alone is not a selection criterion because it continues falling
@@ -392,8 +528,6 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 1. Run the matched LoRA comparison independently from the original pinned checkpoint, using the same frozen data and validation contract.
 2. Select between full fine-tuning and LoRA using validation CER, edit composition, generation health, runtime, and memory.
 3. Predeclare the final comparison set and evaluate the selected configuration once on the sealed 683-clip test set.
-3. Select the F1/LoRA configuration and decoding setting using validation only.
-4. Prepare the private frozen 683-clip test bundle.
-5. Evaluate B0 and the selected supervised model once on the sealed test set.
+
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.
