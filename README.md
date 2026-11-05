@@ -6,7 +6,7 @@ This repository documents a reproducible, Narration-only speech-recognition stud
 
 > How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
 
-**Updated 3 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_RESULTS_AGGREGATE.json).
+**Updated 5 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [learning-rate comparison](docs/PHASE7_F1_LR_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json).
 
 The repository separates measured results from proposals and keeps the final test split sealed until model selection is complete.
 
@@ -22,12 +22,13 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 6B P1 pilot | Complete | Best Epoch 3 CER 107.26%; B0 remained better; insertion-heavy |
 | Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
+| Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
 | LoRA comparison | Not run | Matched follow-up experiment remains |
 | Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
 ## Start here
 
-Public readers can inspect the chronological phase notebooks and saved plots without private data. For the current result, open the [F1 public results notebook](notebooks/Phase-7-F1-Results-Public.ipynb). To reproduce training with authorized private inputs, follow the [F1 Kaggle run guide](docs/PHASE7_F1_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Self-Contained-Kaggle.ipynb). These instructions were inspected here; training and inference were not rerun during this documentation sync.
+Public readers can inspect the chronological phase notebooks and saved plots without private data. For the current result, open the [learning-rate public results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb). To reproduce training with authorized private inputs, follow the [learning-rate Kaggle run guide](docs/PHASE7_F1_LR_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Learning-Rate-Mini-Sweep-Kaggle.ipynb). These instructions were inspected here; training and inference were not rerun during this documentation sync.
 
 ## Frozen data contract
 
@@ -323,6 +324,48 @@ significant generalization.
 
 See the full public report at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), aggregate data at [`docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json`](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_AGGREGATE.json), and the public notebook at [`notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb`](notebooks/Phase-7-F1-Repetition-Penalty-Sweep-Public.ipynb).
 
+### Phase 7 F1 learning-rate mini-sweep
+
+Two independent full-data F1 runs were completed at learning rates `5e-6` and
+`2e-5`, retaining the existing `1e-5` result as the reference. Both runs used
+the frozen 3,629-clip training set and 732-clip validation set, effective batch
+8, FP16 AMP training, batch-8 validation, and the validation-selected
+`repetition_penalty=1.08` policy. The test set was not attached or evaluated.
+
+| Configuration | Best epoch | Validation CER | S | D | I | EOS | Cap hits |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `5e-6` | 3 | 51.05477% | 15,212 | 5,021 | 12,512 | 732 | 0 |
+| `1e-5` reference | 3 | 48.39172% | 14,542 | 5,739 | 10,756 | 732 | 0 |
+| **`2e-5`** | **5** | **47.23950%** | **14,503** | **5,583** | **10,212** | **732** | **0** |
+
+The `2e-5` run is the current validation-selected candidate, improving the
+`1e-5` reference by 1.15222 absolute CER points. Its validation CER worsened
+after Epoch 5 while training loss continued to fall, so Epoch 5—not the final
+Epoch 8 checkpoint—is selected. The lower-rate run peaked at Epoch 3 and then
+oscillated. These results establish a validation preference, not unseen-test
+performance.
+
+![Learning-rate comparison dashboard](assets/phase7_f1_learning_rate/lr_sweep_comparison_dashboard.png)
+
+![Learning-rate CER curves](assets/phase7_f1_learning_rate/cer_curves.png)
+
+![Learning-rate training-loss curves](assets/phase7_f1_learning_rate/training_loss_curves.png)
+
+**Figure interpretation — learning-rate comparison.** The higher rate reaches a
+lower validation CER and remains stable through Epoch 5, but later epochs
+degrade. The lower rate learns more slowly and does not beat the reference.
+Training loss alone is not a selection criterion because it continues falling
+after validation quality has begun to worsen.
+
+Measured runtime was 36.83 minutes for `5e-6` and 48.00 minutes for `2e-5`;
+peak allocated memory was approximately 2,190 MiB for both. Public files include
+aggregate metrics, plots, and a results notebook only; private predictions and
+checkpoints remain excluded.
+
+See the [learning-rate report](docs/PHASE7_F1_LR_RESULTS.md),
+[aggregate metrics](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json), and [public
+results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb).
+
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
 ## Reproducibility and privacy
@@ -346,8 +389,9 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 
 ## Next steps
 
-1. Run the small predeclared full-fine-tuning learning-rate comparison (`5e-6` and `2e-5`) while retaining the existing `1e-5` F1 reference.
-2. Run the matched LoRA comparison independently from the original pinned checkpoint; do not force LoRA to use the full-fine-tuning learning rate.
+1. Run the matched LoRA comparison independently from the original pinned checkpoint, using the same frozen data and validation contract.
+2. Select between full fine-tuning and LoRA using validation CER, edit composition, generation health, runtime, and memory.
+3. Predeclare the final comparison set and evaluate the selected configuration once on the sealed 683-clip test set.
 3. Select the F1/LoRA configuration and decoding setting using validation only.
 4. Prepare the private frozen 683-clip test bundle.
 5. Evaluate B0 and the selected supervised model once on the sealed test set.
