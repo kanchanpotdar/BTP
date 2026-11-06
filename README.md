@@ -514,7 +514,7 @@ Three independent LoRA runs started from the pinned original checkpoint and used
 
 **Interpretation.** LoRA is complete as a comparison but was not selected. Its best validation CER is 13.44 absolute points above full fine-tuning at `2e-5`, Epoch 5 (47.23950%). Rank 16 did not improve on rank 8 at `1e-4`; using the full fine-tuning learning rate with rank 8 also performed worse. LoRA used less GPU memory, but did not improve validation transcription quality.
 
-The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow. The executed notebook and checkpoints remain private because they contain prediction-level outputs and training state.
+The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow; [`scripts/build_phase7_lora_notebook.py`](scripts/build_phase7_lora_notebook.py) rebuilds it from the F1 trainer source. The executed notebook and checkpoints remain private because they contain prediction-level outputs and training state.
 
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
