@@ -23,7 +23,7 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
 | Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
-| LoRA comparison | In progress; no selected result yet | [Self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb); complete saved results still required |
+| Phase 7 LoRA comparison | Complete; not selected | Best LoRA: rank 8, LR `1e-4`, Epoch 7, 60.68% validation CER; full fine-tuning remains lower at 47.24% |
 | Final sealed test evaluation | Not run | Test set remains intentionally untouched |
 
 ## Start here
@@ -502,6 +502,20 @@ See the [learning-rate report](docs/PHASE7_F1_LR_RESULTS.md),
 [aggregate metrics](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json), and [public
 results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb).
 
+#### Phase 7 L1 — LoRA comparison
+
+Three independent LoRA runs started from the pinned original checkpoint and used the same frozen 3,629/732 train/validation split, IPA normalization, CER, validation batch, and repetition penalty 1.08. The 683-clip test set remained sealed.
+
+| Configuration | Best epoch | Validation CER | Training time | Peak allocated memory |
+|---|---:|---:|---:|---:|
+| Rank 8, alpha 16, LR `1e-4` | 7 / 10 | **60.68416%** | 71.872 min | 1,216.46 MiB |
+| Rank 8, alpha 16, LR `2e-5` | 7 / 10 | 65.79509% | 71.568 min | 1,216.46 MiB |
+| Rank 16, alpha 32, LR `1e-4` | 3 / 6 | 61.12540% | 42.844 min | 1,222.51 MiB |
+
+**Interpretation.** LoRA is complete as a comparison but was not selected. Its best validation CER is 13.44 absolute points above full fine-tuning at `2e-5`, Epoch 5 (47.23950%). Rank 16 did not improve on rank 8 at `1e-4`; using the full fine-tuning learning rate with rank 8 also performed worse. LoRA used less GPU memory, but did not improve validation transcription quality.
+
+The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow. The executed notebook and checkpoints remain private because they contain prediction-level outputs and training state.
+
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
 
 ## Reproducibility and privacy
@@ -525,9 +539,9 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 
 ## Next steps
 
-1. Run the matched LoRA comparison independently from the original pinned checkpoint, using the same frozen data and validation contract.
-2. Select between full fine-tuning and LoRA using validation CER, edit composition, generation health, runtime, and memory.
-3. Predeclare the final comparison set and evaluate the selected configuration once on the sealed 683-clip test set.
+1. Freeze the validation-selected full fine-tuning configuration: LR `2e-5`, Epoch 5, repetition penalty 1.08.
+2. Prepare the private frozen 683-clip test bundle.
+3. Evaluate B0 and the selected supervised model once on the sealed test set.
 
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.
