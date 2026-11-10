@@ -12,7 +12,8 @@ These are copies of notebooks downloaded from Kaggle with their saved output cel
 | 7 F1 | [Repetition-penalty sweep](phase7/f1_repetition_penalty_sweep.ipynb) | 28 | Validation-only decoding comparison |
 | 7 F1 | [Learning-rate sweep](phase7/f1_learning_rate_sweep.ipynb) | 98 | Independent `5e-6` and `2e-5` runs and plots |
 | 7 L1 | [LoRA sweep](phase7/lora_sweep.ipynb) | 100 | Three LoRA configurations and comparison figure |
+| 8 | [Final sealed test](phase8/final_sealed_test.ipynb) | 24 | Predeclared B0 and selected F1 inference, metrics, plot and ZIP links |
 
-Phase 6C's saved equivalence and diagnostic outputs are in [`artifacts/exports/phase6c/`](../../artifacts/exports/phase6c/); no executed Phase 6C notebook was found among the supplied downloads. Phase 8 has a [source notebook](../Phase-8-Final-Sealed-Test-Kaggle.ipynb), [saved-output results notebook](../Phase-8-Final-Test-Results-Public.ipynb), and [checked aggregates](../../docs/PHASE8_RESULTS.md). Its original executed Kaggle notebook has not yet been supplied as a downloaded file.
+Phase 6C's saved equivalence and diagnostic outputs are in [`artifacts/exports/phase6c/`](../../artifacts/exports/phase6c/); no executed Phase 6C notebook was found among the supplied downloads. Phase 8 also has a [source notebook](../Phase-8-Final-Sealed-Test-Kaggle.ipynb), a compact [saved-output results notebook](../Phase-8-Final-Test-Results-Public.ipynb), and [checked aggregates](../../docs/PHASE8_RESULTS.md). The executed notebook is preserved as downloaded, including its input-layout correction cell.
 
 Some output cells contain prediction-level text and local run metadata. The numeric conclusions to cite are the checked phase reports under [`docs/`](../../docs/).

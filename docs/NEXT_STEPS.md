@@ -24,7 +24,7 @@ Updated 10 November 2026 after the learning-rate and LoRA comparisons and verifi
 
 ## Final sealed test completed from saved outputs
 
-The downloaded Phase 8 output archives cover all **683 test clips** and **65,577 reference code points** for both predeclared configurations. B0 reached **101.23214%** corpus CER; the validation-selected F1 checkpoint reached **44.57355%**. Every saved row was checked against the frozen test manifest and independently rescored. See [the Phase 8 report](PHASE8_RESULTS.md). The executed Kaggle notebook has not yet been supplied as a downloaded file; inference was not rerun locally.
+The downloaded Phase 8 output archives cover all **683 test clips** and **65,577 reference code points** for both predeclared configurations. B0 reached **101.23214%** corpus CER; the validation-selected F1 checkpoint reached **44.57355%**. Every saved row was checked against the frozen test manifest and independently rescored. The [executed Kaggle notebook](../notebooks/executed/phase8/final_sealed_test.ipynb) contains matching summaries and the same dashboard. See [the Phase 8 report](PHASE8_RESULTS.md). Inference was not rerun locally.
 
 ## Next: analysis and thesis handoff
 

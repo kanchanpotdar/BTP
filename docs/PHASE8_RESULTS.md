@@ -22,7 +22,7 @@ The selected model's earlier validation CER was **47.23950%** on 732 different c
 ## Checks and limits
 
 - Both saved ZIPs passed archive integrity checks. Each prediction file has exactly 683 unique test IDs and 65,577 reference code points. Every saved reference matches the frozen local test manifest. Normalization, S/D/I counts, and EOS flags were recomputed from all saved predictions and matched the aggregate files.
-- These checks validate the **saved outputs**. Model inference was not rerun locally, and the executed Kaggle notebook has not yet been supplied as a downloaded file. The [self-contained source notebook](../notebooks/Phase-8-Final-Sealed-Test-Kaggle.ipynb) records the declared procedure.
+- These checks validate the **saved outputs**. Model inference was not rerun locally. The [original executed Kaggle notebook](../notebooks/executed/phase8/final_sealed_test.ipynb) contains the matching B0/F1 summaries and the same dashboard image; the [self-contained source notebook](../notebooks/Phase-8-Final-Sealed-Test-Kaggle.ipynb) records the declared procedure.
 - Relative error remains sensitive to annotation uncertainty. Speaker/session identity uncertainty, recording-month shift, prompt overlap and the absence of expert Nyishi adjudication still limit interpretation.
 - Do not tune the model, decoding penalty or checkpoint using the test result. A later study would need a new evaluation design rather than reuse this sealed set for selection.
 

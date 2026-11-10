@@ -535,11 +535,11 @@ The selected model reduces test CER by **56.66 absolute points** relative to B0.
 
 ![Final test aggregate dashboard](assets/phase8/test_aggregate_dashboard.png)
 
-**Figure — Final sealed-test comparison.** The panels show overall CER, S/D/I composition, duration-range CER, and generation-cap failures. Duration slices are diagnostic; corpus CER is the primary score. See the [Phase 8 report](docs/PHASE8_RESULTS.md), [aggregate JSON](docs/PHASE8_RESULTS_AGGREGATE.json), and [saved-output results notebook](notebooks/Phase-8-Final-Test-Results-Public.ipynb). The original executed Kaggle notebook has not yet been supplied as a downloaded file.
+**Figure — Final sealed-test comparison.** The panels show overall CER, S/D/I composition, duration-range CER, and generation-cap failures. Duration slices are diagnostic; corpus CER is the primary score. See the [Phase 8 report](docs/PHASE8_RESULTS.md), [aggregate JSON](docs/PHASE8_RESULTS_AGGREGATE.json), [original executed Kaggle notebook](notebooks/executed/phase8/final_sealed_test.ipynb), and [compact results notebook](notebooks/Phase-8-Final-Test-Results-Public.ipynb).
 
 ## Executed Kaggle notebooks and saved artifacts
 
-The [executed-notebook index](notebooks/executed/README.md) links eight downloaded Kaggle notebooks with saved output cells, from Phase 4 through the LoRA comparison. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
+The [executed-notebook index](notebooks/executed/README.md) links nine downloaded Kaggle notebooks with saved output cells, from Phase 4 through the final test. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
 
 ## Reproducibility and artifact access
 

@@ -27,4 +27,4 @@ These ZIPs use **Git LFS**. Clone with Git LFS installed, or download them indiv
 | 7 F1 LR | [`5e-6` best checkpoint](models/phase7_f1_lr5e6_best_epoch3_checkpoint.zip) | Epoch 3 validation CER |
 | 7 F1 LR | [`2e-5` selected checkpoint](models/phase7_f1_lr2e5_best_epoch5_checkpoint.zip) | Epoch 5 validation CER; preselected for final test |
 
-No LoRA checkpoint ZIP was present in the supplied local downloads. Phase 8's saved ZIPs were checked against the frozen test manifest and independently rescored; see the [test report](../docs/PHASE8_RESULTS.md). The original executed Phase 8 Kaggle notebook has not yet been supplied as a downloaded file.
+No LoRA checkpoint ZIP was present in the supplied local downloads. Phase 8's saved ZIPs were checked against the frozen test manifest and independently rescored; see the [test report](../docs/PHASE8_RESULTS.md) and [original executed notebook](../notebooks/executed/phase8/final_sealed_test.ipynb).
