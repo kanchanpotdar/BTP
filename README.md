@@ -23,6 +23,7 @@ This project studies speech-to-IPA transcription for low-resource Nyishi Narrati
 | Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; selected before the test was opened |
 | Phase 7 LoRA comparison | Complete; not selected | Best LoRA: rank 8, LR `1e-4`, Epoch 7, 60.68% validation CER; full fine-tuning remains lower at 47.24% |
 | Final sealed test evaluation | Saved results checked | B0 101.23% versus selected F1 44.57% CER on all 683 test clips |
+| Phase 8 descriptive EDA | Complete; post-hoc | Dataset balance and test-error slices recomputed from saved predictions; no new inference or model selection |
 
 ## Contents
 
@@ -243,6 +244,12 @@ The early pipeline moved from **6,718 preserved source rows** to **5,086 mechani
 ## 3. Model and pilot methodology
 
 The model and processor checks, baseline, pilot, and validation-speed audit establish the procedure used by the full-data experiments. The headings below retain the recorded phase order.
+
+### 3.1 Starting model: IPA-Whisper Base
+
+[`neurlang/ipa-whisper-base`](https://huggingface.co/neurlang/ipa-whisper-base) is a **Whisper Base encoder-decoder Transformer adapted to produce IPA text**. Its model card describes an additional fine-tuning stage on 15,000 synthetic IPA-labelled Common Voice recordings spanning more than 70 languages. The `WhisperProcessor` turns audio into log-Mel features and converts model tokens back into text. This provides a phonetic-output starting point; it does **not** establish that the pretrained model already recognizes Nyishi or reliably preserves its diacritics.
+
+This project pinned revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`, checked the processor against actual NFD Nyishi references, and then adapted the model with the frozen Narration training data. The zero-shot B0 score measures the starting point; later supervised scores measure adaptation under the declared evaluation policy. The [model card](https://huggingface.co/neurlang/ipa-whisper-base) describes the source checkpoint, while [Phase 4](docs/PHASE4_RESULTS.md) records the project-specific processor and generation checks.
 
 ### Phase 4 — processor and model engineering
 
@@ -578,6 +585,82 @@ The selected model reduces test CER by **56.66 absolute points** relative to B0.
 
 The selected full fine-tuned configuration reduced test CER by 56.66 percentage points relative to the zero-shot baseline and ended every test generation normally. It is a strong first research baseline for the declared Nyishi Narration task, not a claim of production-ready transcription. Insertions and substitutions fell, while deletions increased; the remaining 44.57% CER and the absence of expert label adjudication limit conclusions about linguistic accuracy and transfer to other domains. The test was opened after validation selection and is not used for additional tuning.
 
+### 5.2 Post-hoc dataset and final-test EDA
+
+The [self-contained EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb) joined the **saved** B0 and selected-F1 test predictions to the unchanged frozen manifests. It verified manifest hashes, ZIP integrity, all 683 references per model, and the published S/D/I and generation totals before calculating the slices below. **No inference, training, checkpoint selection, or decoding change occurred.** Every subgroup CER is the sum of edits divided by the sum of reference code points *within that subgroup*, rather than an average of clip CERs. The [full aggregate report](docs/PHASE8_DESCRIPTIVE_EDA.md), [JSON](docs/PHASE8_DESCRIPTIVE_EDA_AGGREGATE.json), and [CSV tables](docs/phase8_eda_tables/) contain the detailed denominators.
+
+#### Dataset preparation and split composition
+
+| Versioned view or frozen partition | Clips | Hours | Independent components | Median duration |
+|---|---:|---:|---:|---:|
+| Narration master | 6,718 | — | — | — |
+| Rows with a reference | 5,651 | — | — | — |
+| Phase 1 candidates | 5,086 | — | — | — |
+| Frozen train | 3,629 | 10.8516 | 15 | 9.76 s |
+| Frozen validation | 732 | 1.8818 | 16 | 7.46 s |
+| Frozen test | 683 | 1.8911 | 13 | 8.89 s |
+
+![Dataset curation and frozen-split durations](assets/phase8/eda/01_dataset_funnel_and_duration.png)
+
+**Figure — Dataset flow and durations.** The left panel follows the versioned views from the full Narration master to the 5,044 frozen clips; the right panel compares duration distributions across train, validation, and test. These stages describe successive eligibility and split decisions, not interchangeable sample counts or a claim that excluded source rows were deleted.
+
+![Recorded metadata composition of the frozen splits](assets/phase8/eda/02_split_metadata_balance.png)
+
+**Figure — Split composition.** Clip shares differ by recorded gender, age group, and recording month. In particular, 60+ appears in **17 training clips (0.5%)** and **97 test clips (14.2%)**. These are clip shares, not independently sampled speaker shares; the demographic labels have not been separately adjudicated. This imbalance is relevant when interpreting test subgroups.
+
+#### Overall test errors and clip-level variation
+
+![Phase 8 EDA overall test errors](assets/phase8/eda/03_test_overall_errors_and_generation.png)
+
+**Figure — Primary result and error composition.** On the same 683 test clips and 65,577 reference code points, corpus CER falls from **101.23% (B0)** to **44.57% (selected F1)**. Substitutions and insertions fall substantially; deletions rise. F1 has zero cap hits and replacement-character outputs, but only two exactly matching full transcripts. Error-rate improvement therefore does not mean that complete transcripts are usually error-free.
+
+![Distribution of clip CER and paired edit outcomes](assets/phase8/eda/07_clip_cer_distribution_and_pairing.png)
+
+**Figure — Variation behind the corpus score.** The cumulative curves show a broad shift toward lower per-clip CER after fine-tuning. F1 makes fewer edits than B0 on **624 clips**, the same number on **14**, and more on **45**. This paired count is descriptive; corpus CER remains the primary score. The displayed CER axis stops at 200%, with higher-CER clips still included in every aggregate.
+
+#### CER versus duration and reference length
+
+| Test duration | Clips | F1 corpus CER |
+|---|---:|---:|
+| 0.5–3 s | 94 | 49.10% |
+| >3–6 s | 148 | 50.03% |
+| >6–10 s | 145 | 46.45% |
+| >10–20 s | 234 | 43.29% |
+| >20–30 s | 62 | 42.46% |
+
+![CER against test-clip duration](assets/phase8/eda/04_cer_vs_duration.png)
+
+**Figure — CER versus clip duration.** The bars compare B0 and F1 corpus CER within five duration bins; the scatter shows the selected model's individual-clip spread. In this test partition the shortest bins have higher F1 CER than the 20–30-second bin. One clip above 200% is hidden from the zoomed scatter **only** and remains in the bars and totals. Duration, transcript length, speaker, and recording conditions can overlap, so the plot does not isolate a causal duration effect.
+
+![CER against normalized reference length](assets/phase8/eda/05_cer_vs_reference_length.png)
+
+**Figure — CER versus reference length.** F1 reaches **60.71% CER** on 1–40-code-point references, versus **41.51%** above 120 code points. Errors in a short reference have a large percentage effect because its denominator is small. Reference length and audio duration are related; these are diagnostic bins under the original NFD code-point metric, not a revised scoring policy.
+
+#### Recorded demographic and context slices
+
+| Test metadata | Clips | Independent components | F1 corpus CER |
+|---|---:|---:|---:|
+| Female | 375 | 6 | 44.36% |
+| Male | 308 | 7 | 44.86% |
+| Age 18–30 | 317 | 3 | 45.78% |
+| Age 30–45 | 93 | 3 | 43.36% |
+| Age 45–60 | 176 | 5 | 41.48% |
+| Age 60+ | 97 | **2** | 48.98% |
+
+![Test CER by recorded gender](assets/phase8/eda/06a_cer_by_gender.png)
+
+**Figure — Recorded gender slices.** The selected model's female and male corpus CERs are close in this split, with six and seven independent components respectively. The figure describes these recordings; it does not establish demographic parity for the wider population.
+
+![Test CER by recorded age group](assets/phase8/eda/06b_cer_by_age.png)
+
+**Figure — Recorded age-group slices.** Each bar includes its clip and component counts. The 60+ slice has the highest observed F1 CER here, but it contains only two independent components and differs from training representation. These data cannot establish an age effect or its cause.
+
+![Recording-month and domain diagnostics](assets/phase8/eda/08_month_and_domain_diagnostics.png)
+
+**Figure — Recording context diagnostics.** Month and domain values vary, but most named categories are represented by just **one component**. They are useful descriptions of particular recordings and should not be ranked as general domain performance. Test education metadata are entirely `Unknown` and were not analyzed.
+
+All these comparisons are **post-hoc test descriptions**. They strengthen the report's account of where errors remain; they cannot be used to choose a different model, decoding penalty, or data split. The EDA report also includes a paired component-resampling interval, explicitly limited by the test set's 13 components.
+
 ---
 
 ## 6. Reproducibility and project materials
@@ -589,6 +672,8 @@ For a compact result, open the [learning-rate public results notebook](notebooks
 ### 6.2 Executed notebooks and saved artifacts
 
 The [executed-notebook index](notebooks/executed/README.md) links nine downloaded Kaggle notebooks with saved output cells, from Phase 4 through the final test. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
+
+The [Phase 8 descriptive EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb) is a separate **local** analysis of saved predictions. It includes Markdown explanations, commented cells, progress output, and embedded aggregate figures; no GPU or new test inference is required.
 
 ### 6.3 Run records and artifact access
 

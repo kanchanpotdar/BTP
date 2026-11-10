@@ -1,0 +1,4 @@
+split,clips,hours,components,speaker_groups,duration_median_seconds,duration_p95_seconds,reference_codepoints,reference_median_codepoints
+train,3629,10.851636892361112,15,16,9.76,25.898799999999998,383474,95.0
+validation,732,1.8818083506944443,16,16,7.46,23.280499999999993,64137,66.0
+test,683,1.8910574826388888,13,13,8.89,22.887,65577,82.0
