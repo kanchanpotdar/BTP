@@ -1,6 +1,8 @@
 # SPRINT_PLAN.md — Nyishi IPA baseline and efficient fine-tuning
 
-**Updated:** 2 November 2026. **Scope:** Dataset A Narration only. **First checkpoint:** `neurlang/ipa-whisper-base`.
+**Updated:** 10 November 2026. **Scope:** Dataset A Narration only. **First checkpoint:** `neurlang/ipa-whisper-base`.
+
+> **Completed-run status.** The historical planning sequence below was followed through the final declared Phase 8 test comparison. The validation-selected full fine-tuning checkpoint was learning rate `2e-5`, Epoch 5, repetition penalty `1.08`; final test CER was **44.57355%** versus B0 **101.23214%** on all 683 clips. LoRA was completed but not selected. Post-hoc descriptive EDA was completed from saved predictions. For the current report/presentation task, use the [end-to-end handoff](docs/REPORT_PRESENTATION_HANDOFF.md), [Phase 8 report](docs/PHASE8_RESULTS.md), and [living next steps](docs/NEXT_STEPS.md). Sections that describe provisional configurations are retained as the historical plan, not as the current experiment status.
 
 ## Objective and evidence status
 
@@ -20,12 +22,15 @@ The user's attached “Nyishi ASR: IPA-Whisper Baseline and Fine-Tuning Plan” 
 | Set-aside labels | 42 remain excluded pending linguistic review, despite successful tokenization |
 | Phase 4 | Engineering complete: 5,086 tokenizer checks; 12 training-only audio/features; repeat and reload checks |
 | Measured generation limitations | 6/12 EOS endings; 6/12 full 448-token cap hits without EOS; one U+FFFD output |
-| Model results | B0 full validation: 732 clips, 103.12924% corpus CER; test untouched |
+| Model results | B0 full validation: 732 clips, 103.12924% corpus CER; final declared test: 101.23214% B0 versus 44.57355% selected F1 |
 | Phase 6A | Two finite FP16 AMP updates on 8 frozen-train clips, including checkpoint/resume; no CER |
 | Phase 6B | Completed: 581-clip / 1.002867 h pilot; best Epoch 3 CER 107.25790%; test untouched |
 | Phase 6C | Passed: batch 8 matched single-example outputs on 12 clips; 2.14× faster |
 | Phase 7 F1 | Completed: six epochs; best Epoch 3 validation CER 51.34634%; test sealed |
-| Phase 7 F1 decoding follow-up | Completed: penalty `1.08` selected at 48.39172% validation CER; test sealed |
+| Phase 7 F1 decoding follow-up | Complete: penalty `1.08` selected at 48.39172% validation CER from the initial F1 Epoch 3 checkpoint |
+| F1 learning-rate comparison | Complete: `2e-5`, Epoch 5 selected at 47.23950% validation CER |
+| L1 LoRA comparison | Complete: best 60.68416% validation CER; not selected |
+| Phase 8 and descriptive EDA | Complete: 683/683 test clips per declared configuration; post-hoc EDA did not tune the model |
 
 About 10.85 training hours justify a controlled transfer-learning experiment. Improvement, unseen-speaker generalization and tone recognition remain empirical questions. Preserve the frozen allocation rather than rounding away 0.85 hours or generating a new split. Known structural leakage checks pass; identity/label uncertainty, month shift and prompt overlap remain limitations.
 
@@ -50,12 +55,12 @@ Phases stay in sequential order. Completed evidence is reused; do not reopen Pha
 | 6C. Validation optimization | Compare single-example and batched generation | Exact token/text/S/D/I equivalence on 12 clips | Passed; batch 8 selected |
 | 7A. F1 full fine-tuning | Train all 10.851637 h using validated recipe | Best checkpoint by validation CER, full config and resumable history | Completed: six epochs; best Epoch 3 CER 51.34634%; summed epoch time 38.47 min |
 | 7A.1. F1 repetition-penalty sweep | Re-decode the frozen validation set from the selected Epoch 3 checkpoint with penalties `1.00`, `1.02`, `1.05`, `1.08`, `1.10`; change no other generation setting | All 732 clips per setting; corpus CER/S/D/I, EOS/cap/U+FFFD, output-length ratio, runtime, exact configuration and private predictions | Completed: `1.08` selected at 48.39172% validation CER; test sealed |
-| 7A.2. F1 learning-rate mini-sweep | Repeat full F1 independently at `5e-6` and `2e-5`, retaining the existing `1e-5` reference and the selected validation decoding policy | Matched full-data validation curves, best checkpoints, compute and stability comparison | Planned; two-rate check before L1 LoRA |
-| 7B. L1 LoRA comparison | Same full training membership and evaluation contract; explicit adapter scope | CER/resource comparison and learning curves; recorded budgets | Recommended after F1; feasibility measured first |
+| 7A.2. F1 learning-rate mini-sweep | Repeat full F1 independently at `5e-6` and `2e-5`, retaining the existing `1e-5` reference and the selected validation decoding policy | Matched full-data validation curves, best checkpoints, compute and stability comparison | Completed; `2e-5` Epoch 5 selected at 47.23950% validation CER |
+| 7B. L1 LoRA comparison | Same full training membership and evaluation contract; explicit adapter scope | CER/resource comparison and learning curves; recorded budgets | Completed; best 60.68416% validation CER; not selected |
 | 7C. D1 data scaling | Optional nested 1, 2.5, 5 and full 10.851637 h training subsets | Hashed memberships, data-efficiency curve, compute/exposure totals | Optional; do not delay first complete baseline |
 | 7D. S1 model scale | Conditional IPA-Whisper Small comparison | Newly pinned processor/model checks; matched data/scoring and documented budget | Conditional after Base evidence; Medium deferred |
-| 8. Final test/error analysis | Predeclare selected model(s); evaluate on frozen test once per declared configuration | Test corpus CER, edit counts, group/duration/symbol analysis and uncertainty | Not run; 3–6 h analysis plus measured inference |
-| 9. Handoff/thesis evidence | Consolidate reports, configurations, plots, limitations and provenance | Evidence-backed status; privacy-safe publication | Ongoing; 2–4 h final consolidation |
+| 8. Final test/error analysis | Predeclare selected model(s); evaluate on frozen test once per declared configuration | Test corpus CER, edit counts, group/duration/symbol analysis and uncertainty | Completed; B0 101.23214%, selected F1 44.57355%; descriptive EDA is post-hoc |
+| 9. Handoff/thesis evidence | Consolidate reports, configurations, plots, limitations and provenance | Evidence-backed status and publication | Completed first handoff; see `docs/REPORT_PRESENTATION_HANDOFF.md` |
 
 Effort ranges are human preparation/review estimates, not GPU runtime promises or a guaranteed 72-hour finish. Record actual hardware and pilot throughput before scheduling long runs.
 
@@ -172,21 +177,11 @@ Use the contract in `docs/PHASE4_ZERO_SHOT_PROTOCOL.md`: corpus **code-point CER
 
 ## Immediate next action
 
-Complete the post-F1 work in this declared order:
-
-1. Run **F1-RP** on Kaggle GPU from the saved F1 Epoch 3 checkpoint. Reuse and re-score the saved `1.00` and `1.05` predictions when their audit metadata and denominators verify; generation is still required for each missing penalty because a repetition penalty changes token probabilities during decoding and cannot be applied retrospectively to text.
-2. Keep greedy decoding, batch 8, FP32 inference, explicit attention masks, `task="transcribe"`, automatic language detection, `forced_decoder_ids=None`, `no_repeat_ngram_size=0`, the 448-token cap, suppression fields, normalization and CER implementation fixed. The only swept variable is `repetition_penalty` in `{1.00, 1.02, 1.05, 1.08, 1.10}`.
-3. Select the F1 decoding candidate by minimum validation corpus CER, while reporting S/D/I, EOS/cap/U+FFFD counts and prediction/reference length ratio. Treat the selected penalty as a validation-tuned candidate, not a final test result.
-4. Run the small full-fine-tuning learning-rate check at `5e-6` and `2e-5`, retaining the existing `1e-5` reference. Start each run from the original pinned pretrained checkpoint; do not warm-start from F1 Epoch 3.
-5. Inspect 30–50 insertion-heavy or otherwise pathological validation examples from the selected setting. Classify repetition, hallucinated continuation, weak/silent audio, label inconsistency and genuine acoustic/transcription error without deleting difficult examples.
-6. Run the independently initialized L1 LoRA comparison on the identical frozen train/validation contract. Compare both standard and selected decoding policies, then predeclare one final checkpoint and decoding configuration.
-7. Evaluate that locked configuration once on all 683 sealed test clips in Phase 8. Do not use test results to revise training or decoding.
-
-F1 and Phase 6C are complete. See `docs/PHASE7_F1_RESULTS.md` and `docs/NEXT_STEPS.md`. Keep test sealed and do not alter the frozen split, normalization policy or CER definition.
+Prepare the report and presentation from the verified records in [the end-to-end handoff](docs/REPORT_PRESENTATION_HANDOFF.md). The F1 repetition-penalty sweep, learning-rate mini-sweep, LoRA comparison, Phase 8 final test and post-hoc EDA are complete. Do not reopen the test for configuration selection. Any new model experiment requires a separate, predeclared evaluation design; Dataset B YouTube remains deferred pending content, alignment, duplication and rights review.
 
 ## Reproducibility, scope and handoff
 
-For every actual run, save manifests/subset hashes, source/notebook hash, model/processor revision, compatible package versions (including PEFT when used), seed, GPU, full configuration, training and decoding precision, exact commands, steps/epochs/audio exposures, timing boundaries, memory, learning curves, checkpoints, predictions and gate status. Preserve original Kaggle exports and the executed notebook when available. Public GitHub copies exclude audio, private manifests, transcript-bearing predictions, raw generation IDs, personal metadata, secrets and model weights.
+For every actual run, save manifests/subset hashes, source/notebook hash, model/processor revision, compatible package versions (including PEFT when used), seed, GPU, full configuration, training and decoding precision, exact commands, steps/epochs/audio exposures, timing boundaries, memory, learning curves, checkpoints, predictions and gate status. Preserve original Kaggle exports and the executed notebook when available. Audio and frozen private manifests remain outside GitHub. The owner-authorized artifact publication already includes selected model archives and some transcript-bearing result exports; consult `artifacts/README.md` before reusing or redistributing them.
 
 **Deferred scope:** Dataset B YouTube, new split searches, semantic IPA rewrites, blanket denoising, unaligned >30 s training, automatic quantization and mandatory larger-model comparisons. These would change the research question or add unvalidated variables before the first complete result.
 
@@ -199,3 +194,4 @@ For every actual run, save manifests/subset hashes, source/notebook hash, model/
 - 1 November 2026: revised with user-authorized experiment matrix, AMP/memory controls, processor figures, supervised-target/resume gates, full-vs-LoRA comparison, optional nested data scaling and group-aware uncertainty. Frozen splits/reference/evaluation policy are retained; no code, training or baseline was run by this plan edit.
 - 2 November 2026: added the post-F1 sequence and predeclared F1-RP sweep. Existing verified `1.00` and `1.05` results may be reused after integrity checks; missing penalties require checkpoint re-decoding on validation. The sealed test remains untouched.
 - 3 November 2026: completed the F1-RP sweep (selected penalty `1.08`, 48.39172% validation CER) and added the small two-rate F1 learning-rate check before L1.
+- 10 November 2026: synchronized completed LR, LoRA, final-test and post-hoc EDA outcomes, and linked the report/presentation handoff. Historical experiment proposals above remain visible as planning history.

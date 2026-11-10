@@ -36,6 +36,8 @@ This project studies speech-to-IPA transcription for low-resource Nyishi Narrati
 7. [Conclusions, limitations, and future scope](#7-conclusions-limitations-and-future-scope)
 8. [References](#references)
 
+For a report or presentation, start with the [end-to-end handoff](docs/REPORT_PRESENTATION_HANDOFF.md). It distinguishes measured results, interpretation, and later recommendations and links the reusable figures and code.
+
 ---
 
 ## 1. Introduction
@@ -585,6 +587,18 @@ The selected model reduces test CER by **56.66 absolute points** relative to B0.
 
 The selected full fine-tuned configuration reduced test CER by 56.66 percentage points relative to the zero-shot baseline and ended every test generation normally. It is a strong first research baseline for the declared Nyishi Narration task, not a claim of production-ready transcription. Insertions and substitutions fell, while deletions increased; the remaining 44.57% CER and the absence of expert label adjudication limit conclusions about linguistic accuracy and transfer to other domains. The test was opened after validation selection and is not used for additional tuning.
 
+#### Examples of individual test outcomes
+
+Three saved test clips illustrate a range of results from the validation-selected F1 checkpoint. The exact dataset reference and prediction strings are retained in a **local private example sheet** for the project owner; they are omitted here under the repository publication rule for transcript text. These examples were selected after the test run for explanation and did **not** influence model selection.
+
+| Example | Clip duration | Clip CER and edit counts | What the reference/prediction comparison shows |
+|---|---:|---|---|
+| Relatively good | 9.73 s | **15.56%**; S=1, D=1, I=5 | Much of the annotated phrase is retained, with vowel/consonant and spacing errors. |
+| Remaining errors | 8.90 s | **39.80%**; S=23, D=8, I=8 | A repeated phrase is recognized but over-repeated; many IPA symbols differ. |
+| Difficult over-generation | 9.18 s | **80.30%**; S=12, D=3, I=38 | Extra continuation and repeated fragments drive a high insertion count despite normal EOS termination. |
+
+The per-clip CER is `(S + D + I) / reference code points`. These selected examples are **illustrative, not an estimate of average performance**; the primary result remains corpus CER over all 683 test clips. All three ended with EOS. The project owner can share the private example sheet directly with a report collaborator when appropriate.
+
 ### 5.2 Post-hoc dataset and final-test EDA
 
 The [self-contained EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb) joined the **saved** B0 and selected-F1 test predictions to the unchanged frozen manifests. It verified manifest hashes, ZIP integrity, all 683 references per model, and the published S/D/I and generation totals before calculating the slices below. **No inference, training, checkpoint selection, or decoding change occurred.** Every subgroup CER is the sum of edits divided by the sum of reference code points *within that subgroup*, rather than an average of clip CERs. The [full aggregate report](docs/PHASE8_DESCRIPTIVE_EDA.md), [JSON](docs/PHASE8_DESCRIPTIVE_EDA_AGGREGATE.json), and [CSV tables](docs/phase8_eda_tables/) contain the detailed denominators.
@@ -673,7 +687,7 @@ For a compact result, open the [learning-rate public results notebook](notebooks
 
 The [executed-notebook index](notebooks/executed/README.md) links nine downloaded Kaggle notebooks with saved output cells, from Phase 4 through the final test. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
 
-The [Phase 8 descriptive EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb) is a separate **local** analysis of saved predictions. It includes Markdown explanations, commented cells, progress output, and embedded aggregate figures; no GPU or new test inference is required.
+The [Phase 8 descriptive EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb) is a separate **local** analysis of saved predictions. It includes Markdown explanations, commented cells, progress output, and embedded aggregate figures; no GPU or new test inference is required. The [report and presentation handoff](docs/REPORT_PRESENTATION_HANDOFF.md) provides the full chronology, recommended figure set, source links, and a claims checklist.
 
 ### 6.3 Run records and artifact access
 
@@ -710,10 +724,10 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 3. In a later study, compare IPA-Whisper Small, multilingual Whisper Small, and an IPA-trained XLS-R CTC model under a predeclared matched protocol.
 4. Review Dataset B YouTube by speech/song type, transcript alignment, duplication, and permitted use before considering a separate data-addition experiment.
 
-See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) and [`SPRINT_PLAN.md`](SPRINT_PLAN.md) for the project handoff and recorded experiment plan. Future model and Dataset B work is proposed, not completed.
+See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md), [`SPRINT_PLAN.md`](SPRINT_PLAN.md), and the [end-to-end handoff](docs/REPORT_PRESENTATION_HANDOFF.md). Future model and Dataset B work is proposed, not completed.
 
 ## References
 
 - Radford, A. et al. [*Robust Speech Recognition via Large-Scale Weak Supervision*](https://arxiv.org/abs/2212.04356). Whisper model architecture and pretraining.
 - Neurlang. [`ipa-whisper-base` model card](https://huggingface.co/neurlang/ipa-whisper-base). Starting IPA-adapted checkpoint; the exact revision used here is recorded in the Phase 7 results.
-- Project primary evidence: [decision log](DECISIONS.md), [sprint plan](SPRINT_PLAN.md), [model research](docs/MODEL_RESEARCH.md), [Phase 7 learning-rate results](docs/PHASE7_F1_LR_RESULTS.md), and [Phase 8 final test results](docs/PHASE8_RESULTS.md).
+- Project primary evidence: [public decision summary](docs/DECISIONS_PUBLIC.md), [sprint plan](SPRINT_PLAN.md), [model research](docs/MODEL_RESEARCH_PUBLIC.md), [Phase 7 learning-rate results](docs/PHASE7_F1_LR_RESULTS.md), and [Phase 8 final test results](docs/PHASE8_RESULTS.md).

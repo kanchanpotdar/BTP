@@ -28,8 +28,10 @@ The downloaded Phase 8 output archives cover all **683 test clips** and **65,577
 
 ## Next: analysis and thesis handoff
 
-1. Inspect the saved test errors and report common failure types without choosing a new checkpoint or decoding setting on this test set.
-2. Consolidate the experimental chronology, exact configurations, plots, limitations and model artifacts into the final thesis evidence package.
-3. Keep the frozen test set out of further model selection. Any subsequent training or decoding study needs a separate evaluation design.
+The post-hoc [descriptive EDA](PHASE8_DESCRIPTIVE_EDA.md) now covers duration, reference length, recorded gender/age, month/domain, paired clip edits and selected illustrative errors using saved predictions only. It did not choose a new checkpoint or decoding setting.
+
+1. Assemble the report and presentation using the [end-to-end handoff](REPORT_PRESENTATION_HANDOFF.md), the Phase 8 aggregate table, and the linked figure set. Clearly distinguish validation selection from the one declared test comparison.
+2. Review the three aggregate example outcomes in the [README](../README.md#examples-of-individual-test-outcomes). The project owner has a separate local private sheet with the exact strings for direct collaborator review. Do not treat those selected examples as representative or expert-adjudicated Nyishi text.
+3. Keep the frozen test set out of further model selection. A later matched-model or Dataset B study needs a separately declared evaluation design.
 
 Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication when interpreting the test result.
