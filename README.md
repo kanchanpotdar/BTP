@@ -24,21 +24,21 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
 | Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
 | Phase 7 LoRA comparison | Complete; not selected | Best LoRA: rank 8, LR `1e-4`, Epoch 7, 60.68% validation CER; full fine-tuning remains lower at 47.24% |
-| Final sealed test evaluation | Prepared; result pending | Frozen 683-clip bundle and one-time B0/F1 evaluator prepared locally; no test score has been verified |
+| Final sealed test evaluation | Saved results checked | B0 101.23% versus selected F1 44.57% CER on all 683 test clips |
 
 ## Start here
 
-Public readers can inspect the chronological phase notebooks and saved plots without private data. For the current result, open the [learning-rate public results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb). To reproduce training with authorized private inputs, follow the [learning-rate Kaggle run guide](docs/PHASE7_F1_LR_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Learning-Rate-Mini-Sweep-Kaggle.ipynb). These instructions were inspected here; training and inference were not rerun during this documentation sync.
+For a compact result, open the [learning-rate public results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb). The [executed-notebook index](notebooks/executed/README.md) contains Kaggle downloads with saved output cells, and the [artifact index](artifacts/README.md) lists checkpoints and result archives. To reproduce training with authorized inputs, follow the [learning-rate Kaggle run guide](docs/PHASE7_F1_LR_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Learning-Rate-Mini-Sweep-Kaggle.ipynb). Training and inference were not rerun for this publication.
 
 ## Frozen data contract
 
 - Scope: Dataset A Narration only; Dataset B YouTube is out of scope.
 - Train: **3,629 clips / 10.851637 hours**.
 - Validation: **732 clips / 1.881808 hours**.
-- Test: **683 clips / 1.891057 hours**, sealed.
+- Test: **683 clips / 1.891057 hours**; evaluated once for the two declared Phase 8 configurations after validation selection.
 - Known component, speaker-group, session, and exact-audio overlaps across the accepted split: zero.
 - Primary metric: corpus-level character error rate (CER) over NFD-normalized IPA strings, with substitutions, deletions, and insertions reported separately. Apply NFD, outer trim, and repeated ordinary-space collapse to each reference and hypothesis; retain spaces and IPA marks. Sum per-clip edits over summed reference code points; lower CER is better and insertions can make CER exceed 100%.
-- Raw references and private manifests remain outside the public release.
+- Raw audio and frozen manifests remain outside the public release. Some executed notebook outputs and saved result archives contain reference or prediction text.
 
 ## Phase chronology
 
@@ -384,7 +384,7 @@ F1 started independently from `neurlang/ipa-whisper-base` revision `949f7c4e4ee3
 - Initial maximum of 10 epochs with patience-3 early stopping.
 - Checkpoint every epoch; select minimum full-validation corpus CER.
 - Save resumable optimizer/scheduler/scaler/RNG state and epoch telemetry.
-- Keep all predictions, manifests, audio, IDs, and weights private.
+- Retain full per-epoch state in the original run; the selected checkpoint archive is indexed below.
 
 The executed F1 run completed six epochs before patience-3 early stopping. The best checkpoint was **Epoch 3: 51.35% validation CER**, compared with B0's 103.13%. The model used all 3,629 training clips and all 732 validation clips; the test set remained sealed.
 
@@ -494,9 +494,9 @@ Training loss alone is not a selection criterion because it continues falling
 after validation quality has begun to worsen.
 
 Measured runtime was 36.83 minutes for `5e-6` and 48.00 minutes for `2e-5`;
-peak allocated memory was approximately 2,190 MiB for both. Public files include
-aggregate metrics, plots, and a results notebook only; private predictions and
-checkpoints remain excluded.
+peak allocated memory was approximately 2,190 MiB for both. The executed
+notebook, compact results export, and both best-checkpoint archives are indexed
+below. The 14 GB archive of intermediate epoch states is omitted.
 
 See the [learning-rate report](docs/PHASE7_F1_LR_RESULTS.md),
 [aggregate metrics](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json), and [public
@@ -514,32 +514,48 @@ Three independent LoRA runs started from the pinned original checkpoint and used
 
 **Interpretation.** LoRA is complete as a comparison but was not selected. Its best validation CER is 13.44 absolute points above full fine-tuning at `2e-5`, Epoch 5 (47.23950%). Rank 16 did not improve on rank 8 at `1e-4`; using the full fine-tuning learning rate with rank 8 also performed worse. LoRA used less GPU memory, but did not improve validation transcription quality.
 
-The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow; [`scripts/build_phase7_lora_notebook.py`](scripts/build_phase7_lora_notebook.py) rebuilds it from the F1 trainer source. The executed notebook and checkpoints remain private because they contain prediction-level outputs and training state.
+The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow; [`scripts/build_phase7_lora_notebook.py`](scripts/build_phase7_lora_notebook.py) rebuilds it from the F1 trainer source. The [executed LoRA notebook](notebooks/executed/phase7/lora_sweep.ipynb) retains its output cells. No LoRA checkpoint archive was present in the supplied local downloads.
 
 ![LoRA comparison](assets/phase7_lora/lora_comparison.png)
 
 **Figure — LoRA validation comparison.** The saved aggregate plot compares validation CER, training curves, and resources across the three LoRA configurations. The rank-8, `1e-4` run is best among LoRA runs, but remains above the selected full fine-tuning CER. This is validation evidence, not a test result.
 
-**How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
+**How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition penalty was selected on validation before the Phase 8 test comparison.
 
 ### Phase 8 — sealed test preparation
 
-The frozen 683-clip test bundle and a self-contained Kaggle evaluator have been prepared locally. The test plan fixes two configurations before inspecting test outcomes: the original B0 zero-shot model and the validation-selected full fine-tuning checkpoint (`2e-5`, Epoch 5, repetition penalty `1.08`). The test run has not been verified here, so no test CER or Phase 8 outcome is reported. The local evaluator will save aggregate plots and a separate detailed prediction archive when it completes.
+The frozen 683-clip test bundle was prepared locally. The [self-contained Kaggle notebook](notebooks/Phase-8-Final-Sealed-Test-Kaggle.ipynb) and [matching evaluator](scripts/phase8_final_test.py) fixed two configurations before inspecting test outcomes: the original B0 zero-shot model and the validation-selected full fine-tuning checkpoint (`2e-5`, Epoch 5, repetition penalty `1.08`). The [test-bundle preparation code](scripts/prepare_phase7_test_bundle.py) checked the frozen split and packaged its audio and references outside this repository.
 
-## Reproducibility and privacy
+| Final test configuration | Corpus CER | S | D | I | EOS endings | Cap hits |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 zero-shot | 101.23214% | 36,940 | 4,395 | 25,050 | 550 / 683 | 133 |
+| Selected F1 | **44.57355%** | 13,525 | 6,158 | 9,547 | 683 / 683 | 0 |
+
+The selected model reduces test CER by **56.66 absolute points** relative to B0. Insertions fall from 25,050 to 9,547, and all 683 selected-model outputs end with EOS. Deletions rise from 4,395 to 6,158, so the model still makes meaningful transcription errors. The saved prediction rows were checked against the frozen test manifest and rescored; no inference was rerun for this publication.
+
+![Final test aggregate dashboard](assets/phase8/test_aggregate_dashboard.png)
+
+**Figure — Final sealed-test comparison.** The panels show overall CER, S/D/I composition, duration-range CER, and generation-cap failures. Duration slices are diagnostic; corpus CER is the primary score. See the [Phase 8 report](docs/PHASE8_RESULTS.md), [aggregate JSON](docs/PHASE8_RESULTS_AGGREGATE.json), and [saved-output results notebook](notebooks/Phase-8-Final-Test-Results-Public.ipynb). The original executed Kaggle notebook has not yet been supplied as a downloaded file.
+
+## Executed Kaggle notebooks and saved artifacts
+
+The [executed-notebook index](notebooks/executed/README.md) links eight downloaded Kaggle notebooks with saved output cells, from Phase 4 through the LoRA comparison. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
+
+## Reproducibility and artifact access
 
 - Pin the model revision and compatible package versions in the Kaggle notebooks.
 - Record seed, GPU, package versions, data/configuration hashes, optimizer steps, runtime, memory, and checkpoint paths.
-- Public contents include source code, notebooks, aggregate metrics, and privacy-safe plots only.
-- Private contents include audio, manifests, IDs, transcript-bearing predictions, checkpoints, provenance, and Kaggle output bundles.
+- This public repository includes the supplied executed Kaggle notebooks, selected checkpoint archives through Git LFS, and saved run-result archives at the project owner's request. Some exported notebooks and archives contain prediction-level text, identifiers, and training state.
+- Raw dataset audio, frozen manifests, source shards, interrupted downloads, and the full 14 GB per-epoch learning-rate archive are not copied into this repository. The best learning-rate checkpoints and compact results are retained separately.
 
 ## Repository map
 
-- `notebooks/` — source and public-results notebooks in chronological phase order.
+- `notebooks/` — source, public-results, and `executed/` Kaggle notebooks in chronological phase order.
 - `scripts/` — preprocessing, split, rendering, and audit code.
 - `docs/` — phase reports, protocols, aggregate metrics, and next steps.
 - `assets/` — privacy-safe aggregate plots and processor illustrations.
-- `archive/kaggle_runs/` — local-only Kaggle notebooks and private run archives; not part of the public release.
+- `artifacts/exports/` — saved compact run-result archives and Phase 6C diagnostics.
+- `artifacts/models/` — available selected checkpoint and training-state archives, stored with Git LFS.
 
 ## Limitations
 
@@ -547,9 +563,9 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 
 ## Next steps
 
-1. Freeze the validation-selected full fine-tuning configuration: LR `2e-5`, Epoch 5, repetition penalty 1.08.
-2. Complete the one-time B0 and selected-F1 evaluation on the prepared frozen 683-clip test bundle.
-3. Verify its saved aggregates and diagnostics before reporting test CER; do not tune on the test scores.
+1. Consolidate the verified B0 and selected-F1 test comparison for the thesis.
+2. Inspect test errors and report limitations without tuning on this test set.
+3. Preserve the frozen split and run artifacts for reproducibility.
 
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.

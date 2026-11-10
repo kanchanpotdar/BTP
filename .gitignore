@@ -26,6 +26,8 @@ task1_recovery_audit/
 *.csv
 *.xlsx
 *.zip
+!artifacts/models/*.zip
+!artifacts/exports/**/*.zip
 *.pt
 *.pth
 *.safetensors

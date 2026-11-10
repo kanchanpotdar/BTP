@@ -57,5 +57,8 @@ length fall, and all settings at or above 1.05 end with EOS on all 732 clips.
 It does not solve the remaining acoustic/transcription errors, and the
 validation sweep has not evaluated the sealed 683-clip test set.
 
-Prediction-level JSONL, insertion diagnostics, manifests, IDs and checkpoints
-remain private and are not part of this public report.
+This report contains aggregate evidence. The later owner-authorized
+[result archive](../artifacts/exports/phase7/repetition_penalty_results.zip) and
+[executed notebook](../notebooks/executed/phase7/f1_repetition_penalty_sweep.ipynb)
+may contain prediction-level text and IDs. Frozen manifests and audio remain
+outside the repository.

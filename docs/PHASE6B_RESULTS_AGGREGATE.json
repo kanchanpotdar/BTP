@@ -24,5 +24,5 @@
     {"epoch": 2, "training_loss": 2.2933112630729413, "validation_cer_percent": 129.71607652369147, "substitutions": 30859, "deletions": 2659, "insertions": 49678, "cap_without_eos": 122, "replacement_character_outputs": 22, "validation_seconds": 722.5073494409999},
     {"epoch": 3, "training_loss": 1.8836888281750106, "validation_cer_percent": 107.25790105555295, "substitutions": 28536, "deletions": 2763, "insertions": 37493, "cap_without_eos": 93, "replacement_character_outputs": 19, "validation_seconds": 671.886445985}
   ],
-  "publication_note": "Aggregate-only release. Audio, manifests, IDs, references, per-clip predictions, checkpoints and training state remain private."
+  "publication_note": "This JSON contains aggregate metrics only. A later owner-authorized artifact release includes the best checkpoint and saved run archive; audio and frozen manifests are excluded."
 }

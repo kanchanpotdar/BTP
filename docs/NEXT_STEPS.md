@@ -1,6 +1,6 @@
 # Narration: next steps
 
-Updated 10 November 2026 after the learning-rate and LoRA comparisons, and preparation of the sealed test evaluator. Test results remain pending.
+Updated 10 November 2026 after the learning-rate and LoRA comparisons and verification of the saved final-test results.
 
 ## Completed evidence
 
@@ -22,10 +22,14 @@ Updated 10 November 2026 after the learning-rate and LoRA comparisons, and prepa
 - **LoRA comparison:** three independent configurations were measured. Best LoRA was rank 8, learning rate `1e-4`, Epoch 7 at 60.68416% validation CER. It was not selected over full fine-tuning. See [the LoRA report](PHASE7_LORA_RESULTS.md).
 - **Final selection:** `neurlang/ipa-whisper-base` full fine-tuning at `2e-5`, Epoch 5, repetition penalty 1.08. This decision uses validation only.
 
-## Next: finish the sealed test and document the result
+## Final sealed test completed from saved outputs
 
-1. Run the locally prepared Phase 8 self-contained notebook on the frozen 683-clip test bundle for the predeclared B0 and selected F1 configurations.
-2. Verify both aggregate and prediction archives cover all 683 clips, reconcile S/D/I and reference-character denominators, and inspect generation failures. Do not choose a different checkpoint or decoding setting using test scores.
-3. Publish a concise Phase 8 report with the measured CER, runtime, error patterns, and uncertainty once the saved test outputs are available.
+The downloaded Phase 8 output archives cover all **683 test clips** and **65,577 reference code points** for both predeclared configurations. B0 reached **101.23214%** corpus CER; the validation-selected F1 checkpoint reached **44.57355%**. Every saved row was checked against the frozen test manifest and independently rescored. See [the Phase 8 report](PHASE8_RESULTS.md). The executed Kaggle notebook has not yet been supplied as a downloaded file; inference was not rerun locally.
 
-Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication. No test CER is claimed by this documentation update.
+## Next: analysis and thesis handoff
+
+1. Inspect the saved test errors and report common failure types without choosing a new checkpoint or decoding setting on this test set.
+2. Consolidate the experimental chronology, exact configurations, plots, limitations and model artifacts into the final thesis evidence package.
+3. Keep the frozen test set out of further model selection. Any subsequent training or decoding study needs a separate evaluation design.
+
+Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication when interpreting the test result.

@@ -58,6 +58,6 @@ The mild repetition penalty is the selected validation candidate; the no-repeat 
 
 ## Limitations and next step
 
-- Prediction-level files, audio, manifests, IDs, checkpoints, and provenance remain private.
-- The 683-clip test set has not been evaluated.
-- Complete the planned matched LoRA comparison and predeclare the final model/decoding set using validation only before final private test evaluation of B0 and the selected supervised configuration(s). No further F1 epoch tuning should occur after opening the test set.
+- This report contains aggregate evidence; the later owner-authorized [artifact index](../artifacts/README.md) links the executed notebook, saved results and selected checkpoint. Audio and frozen manifests remain outside the repository.
+- At the time of this F1 run, the 683-clip test set had not been evaluated. The later [Phase 8 report](PHASE8_RESULTS.md) records the predeclared final comparison.
+- The matched LoRA and learning-rate comparisons are complete. The final validation-selected configuration is full fine-tuning at `2e-5`, Epoch 5, repetition penalty 1.08. The prepared Phase 8 notebook predeclares B0 and that configuration for the frozen test; no further tuning should occur after opening test outcomes.

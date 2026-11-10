@@ -12,7 +12,7 @@ The best checkpoint was Epoch 3. The pilot improved steadily but did not beat th
 
 The run used `neurlang/ipa-whisper-base` revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371` on a Tesla T4 with FP16 AMP training, FP32 validation, micro-batch 2, accumulation 4, AdamW learning rate `1e-5`, weight decay `0.01`, and 219 optimizer updates. Total recorded wall time was 2,380 seconds; validation accounted for about 2,291 seconds. This confirms that validation generation, rather than backpropagation, was the main runtime cost.
 
-The latest private rerun is the authoritative P1 artifact for any paired checkpoint audit. A previous private P1 export had slightly different CER values; the public release contains only this latest aggregate run and does not mix per-clip outputs between runs.
+The latest checked rerun is the authoritative P1 artifact for a paired checkpoint audit. A previous export had slightly different CER values; this report uses only the latest aggregate run and does not mix per-clip outputs between runs.
 
 ![Phase 6B learning and validation](../assets/phase6b/phase6b_learning_and_validation.png)
 
@@ -22,4 +22,4 @@ The latest private rerun is the authoritative P1 artifact for any paired checkpo
 
 The pilot proves that the supervised pipeline learns the IPA target and reduces uncontrolled generation, but it does not establish that this one-hour recipe is sufficient. At the time of this handoff, Phase 6C validation optimization was the next gate, followed by an independent F1 run on all 3,629 training clips. Those phases are now complete; the current next steps are recorded in [the living next-steps document](NEXT_STEPS.md). The 683 test clips remain sealed.
 
-This public report contains aggregate values and plots only. Private audio, manifests, identifiers, transcript-bearing predictions, checkpoints and training state are excluded.
+This report contains aggregate values and plots. A later owner-authorized update added the [pilot results](../artifacts/exports/phase6b/pilot_results.zip), [best checkpoint](../artifacts/models/phase6b_pilot_best_checkpoint.zip), and [executed notebook](../notebooks/executed/phase6b/pilot.ipynb) to the repository. Audio and frozen manifests remain outside it.

@@ -26,4 +26,4 @@ These are validation comparisons, not test-set estimates. Do not tune the model 
 
 ## Reproducibility and privacy
 
-The results were transcribed from the executed `lora-sweep-for-btp.ipynb` outputs. Training was not rerun to prepare this report. Public reporting contains aggregate metrics only. Audio, manifests, IDs, raw/normalized prediction text, checkpoints, optimizer state, and provenance remain private.
+The results were transcribed from the [executed LoRA notebook](../notebooks/executed/phase7/lora_sweep.ipynb) outputs. Training was not rerun to prepare this report. The notebook's saved outputs and the [comparison plot](../assets/phase7_lora/lora_comparison.png) are published as supplied. No LoRA checkpoint archive was present in the supplied local downloads.

@@ -41,4 +41,4 @@ The machine-readable aggregate is [`PHASE7_F1_LR_RESULTS_AGGREGATE.json`](PHASE7
 
 ## Next step
 
-The independent LoRA comparison is complete; its best validation CER was 60.68416%, so the `2e-5` full fine-tuning checkpoint remains selected. The Phase 8 notebook predeclares B0 and this selected checkpoint for the frozen 683-clip test. Test outcomes are not yet reported here; do not use them to tune the model or decoding policy.
+The independent LoRA comparison is complete; its best validation CER was 60.68416%, so the `2e-5` full fine-tuning checkpoint remained selected. The later [Phase 8 report](PHASE8_RESULTS.md) records the predeclared B0 and selected-F1 comparison on the frozen 683-clip test. Do not use those test outcomes to tune the model or decoding policy.
