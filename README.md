@@ -1,14 +1,12 @@
-# Nyishi IPA-ASR: reproducible narration baseline
+# Nyishi IPA-ASR: a reproducible narration baseline
 
-This repository documents a reproducible, Narration-only speech-recognition study for Nyishi transcribed into IPA. The first model is `neurlang/ipa-whisper-base`. The project is organized as a sequence of auditable phases: data inventory, curation, split design, processor/model checks, a zero-shot baseline, supervised pilots, validation optimization, and finally full training.
+**Project report and repository guide · Updated 10 November 2026**
 
-## Research question
+## Abstract
 
-> How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
+This project studies speech-to-IPA transcription for low-resource Nyishi Narration audio. It preserves an auditable data-preparation record, a frozen speaker/session-aware split, and a declared corpus-level character error rate (CER) policy. Starting from `neurlang/ipa-whisper-base`, the study compared zero-shot inference, supervised pilots, full fine-tuning, decoding and learning-rate choices, and LoRA on validation data. The validation-selected full fine-tuned checkpoint achieved **44.57% CER** on all **683 held-out test clips**, compared with **101.23%** for the zero-shot baseline. The result shows substantial adaptation but leaves significant transcription errors and label uncertainty. This README follows the structure of a technical report while retaining the project phases in chronological order.
 
-**Documentation reviewed 6 November 2026.** See the [F1 report](docs/PHASE7_F1_RESULTS.md), [learning-rate comparison](docs/PHASE7_F1_LR_RESULTS.md), [repetition-penalty sweep](docs/PHASE7_F1_REPETITION_PENALTY_SWEEP_RESULTS.md), and [machine-readable aggregate results](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json).
-
-The repository separates measured results from proposals and keeps the final test split sealed until model selection is complete.
+**Keywords:** Nyishi; automatic speech recognition; International Phonetic Alphabet; Whisper; low-resource speech; character error rate.
 
 ## Current status at a glance
 
@@ -22,15 +20,47 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 6B P1 pilot | Complete | Best Epoch 3 CER 107.26%; B0 remained better; insertion-heavy |
 | Phase 6C validation optimization | Passed | Batch 8 exactly matched single-example outputs; validation speed improved 2.14× |
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
-| Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
+| Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; selected before the test was opened |
 | Phase 7 LoRA comparison | Complete; not selected | Best LoRA: rank 8, LR `1e-4`, Epoch 7, 60.68% validation CER; full fine-tuning remains lower at 47.24% |
 | Final sealed test evaluation | Saved results checked | B0 101.23% versus selected F1 44.57% CER on all 683 test clips |
 
-## Start here
+## Contents
 
-For a compact result, open the [learning-rate public results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb). The [executed-notebook index](notebooks/executed/README.md) contains Kaggle downloads with saved output cells, and the [artifact index](artifacts/README.md) lists checkpoints and result archives. To reproduce training with authorized inputs, follow the [learning-rate Kaggle run guide](docs/PHASE7_F1_LR_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Learning-Rate-Mini-Sweep-Kaggle.ipynb). Training and inference were not rerun for this publication.
+1. [Introduction](#1-introduction)
+2. [Data preparation and evaluation design](#2-data-preparation-and-evaluation-design)
+3. [Model and pilot methodology](#3-model-and-pilot-methodology)
+4. [Full-data experiments and validation results](#4-full-data-experiments-and-validation-results)
+5. [Final test results and discussion](#5-final-test-results-and-discussion)
+6. [Reproducibility and project materials](#6-reproducibility-and-project-materials)
+7. [Conclusions, limitations, and future scope](#7-conclusions-limitations-and-future-scope)
+8. [References](#references)
 
-## Frozen data contract
+---
+
+## 1. Introduction
+
+### 1.1 Motivation and scope
+
+The objective is a controlled first baseline for Nyishi speech transcribed in IPA. The first benchmark uses Dataset A Narration; Dataset B YouTube remains outside this comparison pending separate linguistic, provenance, and rights review. The chosen starting model is an IPA-adapted Whisper Base checkpoint, not a model already proven to recognize Nyishi. The research contribution here is the evaluated adaptation and its documented data and scoring contract.
+
+### 1.2 Research question and objectives
+
+> How much does supervised adaptation improve Nyishi IPA transcription over a fixed zero-shot reference, under a frozen speaker/session-disjoint evaluation design?
+
+- Curate and freeze a short-clip Narration benchmark without changing source audio or raw labels.
+- Verify processor behavior, training updates, generation settings, and scoring before full training.
+- Select checkpoint and decoding settings using validation CER, then compare the selected model with the zero-shot baseline on the held-out test set.
+- Preserve the run evidence and describe remaining errors without tuning on the final test.
+
+### 1.3 Evidence and reading guide
+
+Tables identify the dataset partition used for each result. “Validation” denotes model selection or diagnostics; “test” denotes the single declared final comparison. Saved notebook outputs are run evidence, while linked aggregate reports and plots make the results easier to inspect. No model inference or training was rerun to restructure this README.
+
+---
+
+## 2. Data preparation and evaluation design
+
+### 2.1 Frozen data and scoring contract
 
 - Scope: Dataset A Narration only; Dataset B YouTube is out of scope.
 - Train: **3,629 clips / 10.851637 hours**.
@@ -40,7 +70,7 @@ For a compact result, open the [learning-rate public results notebook](notebooks
 - Primary metric: corpus-level character error rate (CER) over NFD-normalized IPA strings, with substitutions, deletions, and insertions reported separately. Apply NFD, outer trim, and repeated ordinary-space collapse to each reference and hypothesis; retain spaces and IPA marks. Sum per-clip edits over summed reference code points; lower CER is better and insertions can make CER exceed 100%.
 - Raw audio and frozen manifests remain outside the public release. Some executed notebook outputs and saved result archives contain reference or prediction text.
 
-## Phase chronology
+### 2.2 Chronological curation and split record
 
 Each phase presents its measured outcome, supporting figures, and interpretation. Candidate split figures document historical decisions; Phase 3.5B defines the frozen benchmark.
 
@@ -210,6 +240,10 @@ The early pipeline moved from **6,718 preserved source rows** to **5,086 mechani
 
 ---
 
+## 3. Model and pilot methodology
+
+The model and processor checks, baseline, pilot, and validation-speed audit establish the procedure used by the full-data experiments. The headings below retain the recorded phase order.
+
 ### Phase 4 — processor and model engineering
 
 - Verified processor/tokenizer round trips, feature shape and finiteness, model loading, generation configuration, and a training-only smoke path.
@@ -372,6 +406,10 @@ Evidence is in [`docs/PHASE6C_RESULTS.md`](docs/PHASE6C_RESULTS.md) and [`docs/P
 
 ---
 
+## 4. Full-data experiments and validation results
+
+All checkpoint, learning-rate, and decoding choices in this chapter were made on validation data. The later test result appears only in Chapter 5.
+
 ### Phase 7 F1 — full supervised fine-tuning
 
 F1 started independently from `neurlang/ipa-whisper-base` revision `949f7c4e4ee374b5202bc5886f6e4552e5ae2371`, rather than from the P1 checkpoint.
@@ -474,8 +512,7 @@ The `2e-5` run is the current validation-selected candidate, improving the
 `1e-5` reference by 1.15222 absolute CER points. Its validation CER worsened
 after Epoch 5 while training loss continued to fall, so Epoch 5—not the final
 Epoch 8 checkpoint—is selected. The lower-rate run peaked at Epoch 3 and then
-oscillated. These results establish a validation preference, not unseen-test
-performance.
+oscillated. This was the validation-only selection decision made before the final test.
 
 ![Learning-rate comparison dashboard](assets/phase7_f1_learning_rate/lr_sweep_comparison_dashboard.png)
 
@@ -488,10 +525,6 @@ performance.
 ![Learning-rate training-loss curves](assets/phase7_f1_learning_rate/training_loss_curves.png)
 
 **Figure — Training loss by epoch.** Tracks optimization, while validation CER remains the model-selection criterion.
-lower validation CER and remains stable through Epoch 5, but later epochs
-degrade. The lower rate learns more slowly and does not beat the reference.
-Training loss alone is not a selection criterion because it continues falling
-after validation quality has begun to worsen.
 
 Measured runtime was 36.83 minutes for `5e-6` and 48.00 minutes for `2e-5`;
 peak allocated memory was approximately 2,190 MiB for both. The executed
@@ -502,7 +535,7 @@ See the [learning-rate report](docs/PHASE7_F1_LR_RESULTS.md),
 [aggregate metrics](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json), and [public
 results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb).
 
-#### Phase 7 L1 — LoRA comparison
+### Phase 7 L1 — LoRA comparison
 
 Three independent LoRA runs started from the pinned original checkpoint and used the same frozen 3,629/732 train/validation split, IPA normalization, CER, validation batch, and repetition penalty 1.08. The 683-clip test set remained sealed.
 
@@ -522,7 +555,11 @@ The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESUL
 
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition penalty was selected on validation before the Phase 8 test comparison.
 
-### Phase 8 — sealed test preparation
+---
+
+## 5. Final test results and discussion
+
+### Phase 8 — final held-out test evaluation
 
 The frozen 683-clip test bundle was prepared locally. The [self-contained Kaggle notebook](notebooks/Phase-8-Final-Sealed-Test-Kaggle.ipynb) and [matching evaluator](scripts/phase8_final_test.py) fixed two configurations before inspecting test outcomes: the original B0 zero-shot model and the validation-selected full fine-tuning checkpoint (`2e-5`, Epoch 5, repetition penalty `1.08`). The [test-bundle preparation code](scripts/prepare_phase7_test_bundle.py) checked the frozen split and packaged its audio and references outside this repository.
 
@@ -537,18 +574,30 @@ The selected model reduces test CER by **56.66 absolute points** relative to B0.
 
 **Figure — Final sealed-test comparison.** The panels show overall CER, S/D/I composition, duration-range CER, and generation-cap failures. Duration slices are diagnostic; corpus CER is the primary score. See the [Phase 8 report](docs/PHASE8_RESULTS.md), [aggregate JSON](docs/PHASE8_RESULTS_AGGREGATE.json), [original executed Kaggle notebook](notebooks/executed/phase8/final_sealed_test.ipynb), and [compact results notebook](notebooks/Phase-8-Final-Test-Results-Public.ipynb).
 
-## Executed Kaggle notebooks and saved artifacts
+### 5.1 Interpretation
+
+The selected full fine-tuned configuration reduced test CER by 56.66 percentage points relative to the zero-shot baseline and ended every test generation normally. It is a strong first research baseline for the declared Nyishi Narration task, not a claim of production-ready transcription. Insertions and substitutions fell, while deletions increased; the remaining 44.57% CER and the absence of expert label adjudication limit conclusions about linguistic accuracy and transfer to other domains. The test was opened after validation selection and is not used for additional tuning.
+
+---
+
+## 6. Reproducibility and project materials
+
+### 6.1 Where to start
+
+For a compact result, open the [learning-rate public results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb). The [executed-notebook index](notebooks/executed/README.md) contains Kaggle downloads with saved output cells, and the [artifact index](artifacts/README.md) lists checkpoints and result archives. To reproduce training with authorized inputs, follow the [learning-rate Kaggle run guide](docs/PHASE7_F1_LR_KAGGLE_RUN.md) and [self-contained notebook](notebooks/Phase-7-F1-Learning-Rate-Mini-Sweep-Kaggle.ipynb). Training and inference were not rerun for this publication.
+
+### 6.2 Executed notebooks and saved artifacts
 
 The [executed-notebook index](notebooks/executed/README.md) links nine downloaded Kaggle notebooks with saved output cells, from Phase 4 through the final test. These are saved run evidence, not reruns performed for this publication. The [artifact index](artifacts/README.md) lists result exports and available selected checkpoints. Plots used in this README are also ordinary image files under `assets/`.
 
-## Reproducibility and artifact access
+### 6.3 Run records and artifact access
 
 - Pin the model revision and compatible package versions in the Kaggle notebooks.
 - Record seed, GPU, package versions, data/configuration hashes, optimizer steps, runtime, memory, and checkpoint paths.
 - This public repository includes the supplied executed Kaggle notebooks, selected checkpoint archives through Git LFS, and saved run-result archives at the project owner's request. Some exported notebooks and archives contain prediction-level text, identifiers, and training state.
 - Raw dataset audio, frozen manifests, source shards, interrupted downloads, and the full 14 GB per-epoch learning-rate archive are not copied into this repository. The best learning-rate checkpoints and compact results are retained separately.
 
-## Repository map
+### 6.4 Repository map
 
 - `notebooks/` — source, public-results, and `executed/` Kaggle notebooks in chronological phase order.
 - `scripts/` — preprocessing, split, rendering, and audit code.
@@ -557,15 +606,29 @@ The [executed-notebook index](notebooks/executed/README.md) links nine downloade
 - `artifacts/exports/` — saved compact run-result archives and Phase 6C diagnostics.
 - `artifacts/models/` — available selected checkpoint and training-state archives, stored with Git LFS.
 
-## Limitations
+---
 
-Labels and proposed identities lack expert Nyishi adjudication. Recording-month shift and one overlapping prompt on distinct train/validation audio remain documented limitations. Validation improvements do not establish unseen-test performance or tone recognition. The 12-clip Phase 6C equivalence result is scoped to that checkpoint, sample and runtime.
+## 7. Conclusions, limitations, and future scope
 
-## Next steps
+### 7.1 Conclusions
 
-1. Consolidate the verified B0 and selected-F1 test comparison for the thesis.
-2. Inspect test errors and report limitations without tuning on this test set.
-3. Preserve the frozen split and run artifacts for reproducibility.
+The complete first comparison supports a measured conclusion: supervised adaptation of the pinned IPA-Whisper Base checkpoint substantially improved corpus CER on the frozen Narration test set relative to its zero-shot baseline. The full fine-tuning candidate outperformed the tested LoRA configurations on validation; this does not establish that it is the best possible model architecture for Nyishi.
 
+### 7.2 Limitations
 
-See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.
+Labels and proposed identities lack expert Nyishi adjudication. Recording-month shift and one overlapping prompt on distinct train/validation audio remain documented limitations. The held-out result covers only Dataset A Narration and does not establish accuracy on singing, other domains, or individual tone distinctions. The 12-clip Phase 6C equivalence result is scoped to that checkpoint, sample and runtime.
+
+### 7.3 Future scope
+
+1. Consolidate the verified methods, final test table, and principal plots into the BTP report and presentation.
+2. Audit remaining test errors descriptively; do not revise model selection or decoding using these test labels.
+3. In a later study, compare IPA-Whisper Small, multilingual Whisper Small, and an IPA-trained XLS-R CTC model under a predeclared matched protocol.
+4. Review Dataset B YouTube by speech/song type, transcript alignment, duplication, and permitted use before considering a separate data-addition experiment.
+
+See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) and [`SPRINT_PLAN.md`](SPRINT_PLAN.md) for the project handoff and recorded experiment plan. Future model and Dataset B work is proposed, not completed.
+
+## References
+
+- Radford, A. et al. [*Robust Speech Recognition via Large-Scale Weak Supervision*](https://arxiv.org/abs/2212.04356). Whisper model architecture and pretraining.
+- Neurlang. [`ipa-whisper-base` model card](https://huggingface.co/neurlang/ipa-whisper-base). Starting IPA-adapted checkpoint; the exact revision used here is recorded in the Phase 7 results.
+- Project primary evidence: [decision log](DECISIONS.md), [sprint plan](SPRINT_PLAN.md), [model research](docs/MODEL_RESEARCH.md), [Phase 7 learning-rate results](docs/PHASE7_F1_LR_RESULTS.md), and [Phase 8 final test results](docs/PHASE8_RESULTS.md).
