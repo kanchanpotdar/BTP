@@ -24,7 +24,7 @@ The repository separates measured results from proposals and keeps the final tes
 | Phase 7 F1 full fine-tuning | Complete | Best Epoch 3 CER 51.35%; validation-only repetition-penalty sweep selected 1.08 at 48.39% |
 | Phase 7 F1 learning-rate mini-sweep | Complete | `2e-5`, Epoch 5: 47.24% validation CER; test remains sealed |
 | Phase 7 LoRA comparison | Complete; not selected | Best LoRA: rank 8, LR `1e-4`, Epoch 7, 60.68% validation CER; full fine-tuning remains lower at 47.24% |
-| Final sealed test evaluation | Not run | Test set remains intentionally untouched |
+| Final sealed test evaluation | Prepared; result pending | Frozen 683-clip bundle and one-time B0/F1 evaluator prepared locally; no test score has been verified |
 
 ## Start here
 
@@ -516,7 +516,15 @@ Three independent LoRA runs started from the pinned original checkpoint and used
 
 The full table includes S/D/I counts and run details in [`docs/PHASE7_LORA_RESULTS.md`](docs/PHASE7_LORA_RESULTS.md). The [self-contained LoRA Kaggle notebook](notebooks/Phase-7-L1-LoRA-Self-Contained-Kaggle.ipynb) documents the run code and export workflow; [`scripts/build_phase7_lora_notebook.py`](scripts/build_phase7_lora_notebook.py) rebuilds it from the F1 trainer source. The executed notebook and checkpoints remain private because they contain prediction-level outputs and training state.
 
+![LoRA comparison](assets/phase7_lora/lora_comparison.png)
+
+**Figure — LoRA validation comparison.** The saved aggregate plot compares validation CER, training curves, and resources across the three LoRA configurations. The rank-8, `1e-4` run is best among LoRA runs, but remains above the selected full fine-tuning CER. This is validation evidence, not a test result.
+
 **How F1 is interpreted.** Training loss is diagnostic. The selected model is the epoch with the lowest full-validation CER. If CER stops improving for three validations, early stopping ends the run. The repetition-penalty result remains validation-only until the sealed test evaluation.
+
+### Phase 8 — sealed test preparation
+
+The frozen 683-clip test bundle and a self-contained Kaggle evaluator have been prepared locally. The test plan fixes two configurations before inspecting test outcomes: the original B0 zero-shot model and the validation-selected full fine-tuning checkpoint (`2e-5`, Epoch 5, repetition penalty `1.08`). The test run has not been verified here, so no test CER or Phase 8 outcome is reported. The local evaluator will save aggregate plots and a separate detailed prediction archive when it completes.
 
 ## Reproducibility and privacy
 
@@ -540,8 +548,8 @@ Labels and proposed identities lack expert Nyishi adjudication. Recording-month 
 ## Next steps
 
 1. Freeze the validation-selected full fine-tuning configuration: LR `2e-5`, Epoch 5, repetition penalty 1.08.
-2. Prepare the private frozen 683-clip test bundle.
-3. Evaluate B0 and the selected supervised model once on the sealed test set.
+2. Complete the one-time B0 and selected-F1 evaluation on the prepared frozen 683-clip test bundle.
+3. Verify its saved aggregates and diagnostics before reporting test CER; do not tune on the test scores.
 
 
 See [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) for the active handoff.

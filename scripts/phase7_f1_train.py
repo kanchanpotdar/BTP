@@ -161,6 +161,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--max-epochs", type=int, default=10)
     parser.add_argument("--patience", type=int, default=3)
     parser.add_argument("--learning-rate", type=float, default=1e-5)
+    parser.add_argument("--repetition-penalty", type=float, default=1.0)
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=0)
     args, unknown = parser.parse_known_args(argv)
@@ -194,15 +195,30 @@ def main(argv: list[str] | None = None) -> None:
     random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed); torch.cuda.manual_seed_all(args.seed)
     processor = WhisperProcessor.from_pretrained(MODEL_ID, revision=MODEL_REVISION)
     generation_config = GenerationConfig.from_dict(json.loads((val_root / "generation_config.json").read_text()))
-    # Phase 6C proved this effective runtime policy is equivalent to single-example decoding.
-    generation_config.forced_decoder_ids = [[1, None], [2, 50359]]
-    generation_config.suppress_tokens = []
+    # Reproduce the corrected Phase 7 validation policy. Only the explicitly
+    # declared repetition penalty may differ between matched experiments.
+    generation_config.max_new_tokens = None
     generation_config.do_sample = False
     generation_config.num_beams = 1
+    generation_config.num_return_sequences = 1
+    generation_config.no_repeat_ngram_size = 0
+    generation_config.suppress_tokens = []
+    generation_config.forced_decoder_ids = None
+    generation_config.language = None
+    generation_config.task = "transcribe"
+    generation_config.return_timestamps = False
     generation_config.max_length = MAX_LENGTH
     generation_config.begin_suppress_tokens = [220, EOS_ID]
     generation_config.return_dict_in_generate = True
+    generation_config.output_scores = False
+    generation_config.pad_token_id = EOS_ID
+    generation_config.eos_token_id = EOS_ID
+    generation_config.repetition_penalty = args.repetition_penalty
     assert generation_config.eos_token_id == EOS_ID and generation_config.max_length == MAX_LENGTH
+    assert generation_config.decoder_start_token_id == 50258
+    assert generation_config.forced_decoder_ids is None
+    assert generation_config.language is None and generation_config.task == "transcribe"
+    assert generation_config.no_repeat_ngram_size == 0
 
     def read_audio(root: Path, row: dict) -> np.ndarray:
         path = safe(root, row["audio_file"])
@@ -211,19 +227,26 @@ def main(argv: list[str] | None = None) -> None:
         assert 0.5 <= len(audio) / sample_rate < 30
         return audio[:, 0]
 
-    def make_features(root: Path, rows: list[dict]) -> torch.Tensor:
+    def make_features(
+        root: Path,
+        rows: list[dict],
+        *,
+        return_attention_mask: bool = False,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         audios = [read_audio(root, row) for row in rows]
         # Force Whisper's fixed 30-second window for batched inputs. Plain
         # padding=True pads only to the longest item in this batch and can
         # return a time axis different from the required 3,000 frames.
-        features = processor.feature_extractor(
+        packed = processor.feature_extractor(
             audios,
             sampling_rate=16000,
             return_tensors="pt",
+            return_attention_mask=return_attention_mask,
             padding="max_length",
             truncation=True,
             max_length=480000,
-        ).input_features
+        )
+        features = packed.input_features
         if features.ndim == 2:
             features = features.unsqueeze(0)
         assert features.ndim == 3 and features.shape[1] == 80, (
@@ -237,7 +260,18 @@ def main(argv: list[str] | None = None) -> None:
             features = F.pad(features, (0, 3000 - features.shape[-1]))
         assert tuple(features.shape[1:]) == (80, 3000)
         assert torch.isfinite(features).all().item(), "Non-finite Whisper features"
-        return features.to(dtype=torch.float32)
+        features = features.to(dtype=torch.float32)
+        if not return_attention_mask:
+            return features
+        attention_mask = packed.attention_mask
+        if attention_mask.ndim == 1:
+            attention_mask = attention_mask.unsqueeze(0)
+        if attention_mask.shape[-1] > 3000:
+            attention_mask = attention_mask[..., :3000]
+        elif attention_mask.shape[-1] < 3000:
+            attention_mask = F.pad(attention_mask, (0, 3000 - attention_mask.shape[-1]))
+        assert tuple(attention_mask.shape) == (len(rows), 3000)
+        return features, attention_mask.long()
 
     def make_labels(rows: list[dict]) -> torch.Tensor:
         # Use WhisperTokenizerFast.__call__ for batched tokenization. This
@@ -308,15 +342,23 @@ def main(argv: list[str] | None = None) -> None:
         model.eval(); model.config.use_cache = True; records = []; started = time.perf_counter()
         for begin in tqdm(range(0, len(val_rows), args.validation_batch), desc=f"Epoch {epoch} validation", unit="batch"):
             rows = val_rows[begin:begin + args.validation_batch]
-            features = make_features(val_root, rows).to(device)
+            features, attention_mask = make_features(
+                val_root, rows, return_attention_mask=True
+            )
+            features = features.to(device)
+            attention_mask = attention_mask.to(device)
             with torch.inference_mode():
-                generated = model.generate(input_features=features, generation_config=copy.deepcopy(generation_config))
+                generated = model.generate(
+                    input_features=features,
+                    attention_mask=attention_mask,
+                    generation_config=copy.deepcopy(generation_config),
+                )
             for row, sequence in zip(rows, generated.sequences.detach().cpu().tolist()):
                 ids = sequence[:sequence.index(EOS_ID) + 1] if EOS_ID in sequence else sequence[:MAX_LENGTH]
                 raw = processor.tokenizer.decode(ids, skip_special_tokens=True); hypothesis = normalize(raw); reference = normalize(row["reference"])
                 substitutions, deletions, insertions = edit_counts(reference, hypothesis)
                 records.append({"sample_id": row["sample_id"], "reference": reference, "raw_prediction": raw, "normalized_prediction": hypothesis, "token_ids": ids, "eos": bool(ids and ids[-1] == EOS_ID), "cap_without_eos": len(ids) >= MAX_LENGTH and (not ids or ids[-1] != EOS_ID), "S": substitutions, "D": deletions, "I": insertions, "duration_seconds": float(row["duration_seconds"])})
-            del features, generated
+            del features, attention_mask, generated
         model.train(); model.config.use_cache = False; gc.collect(); torch.cuda.empty_cache()
         reference_codepoints = sum(len(r["reference"]) for r in records); S = sum(r["S"] for r in records); D = sum(r["D"] for r in records); I = sum(r["I"] for r in records)
         return {"clips": len(records), "reference_codepoints": reference_codepoints, "S": S, "D": D, "I": I, "edit_count": S + D + I, "corpus_cer": (S + D + I) / reference_codepoints, "eos_count": sum(r["eos"] for r in records), "cap_without_eos": sum(r["cap_without_eos"] for r in records), "replacement_character_outputs": sum("�" in r["normalized_prediction"] for r in records), "elapsed_seconds": time.perf_counter() - started}, records
@@ -352,7 +394,7 @@ def main(argv: list[str] | None = None) -> None:
         (args.output / "aggregate_history.json").write_text(json.dumps(history, indent=2) + "\n")
         print({"epoch": epoch, "validation_cer_percent": 100 * validation["corpus_cer"], "best_epoch": best_epoch, "stale_epochs": stale_epochs, "train_peak_allocated_mib": train_memory, "validation_seconds": validation["elapsed_seconds"]})
         if stale_epochs >= args.patience: print(f"Early stopping after {args.patience} non-improving validation epochs."); break
-    report = {"experiment": "F1", "status": "complete", "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "train_clips": len(train_rows), "train_hours": train_record["hours"], "validation_clips": len(val_rows), "validation_hours": val_record["hours"], "test_data_used": False, "seed": args.seed, "physical_batch": args.physical_batch, "accumulation": args.accumulation, "effective_batch": 8, "validation_batch": args.validation_batch, "learning_rate": args.learning_rate, "weight_decay": args.weight_decay, "max_epochs": args.max_epochs, "patience": args.patience, "best_epoch": best_epoch, "best_validation_cer": best_cer, "completed_steps": completed_steps, "total_wall_seconds": time.perf_counter() - run_started, "peak_allocated_mib": torch.cuda.max_memory_allocated(device) / 1024**2, "peak_reserved_mib": torch.cuda.max_memory_reserved(device) / 1024**2, "history": history}
+    report = {"experiment": "F1", "status": "complete", "model_id": MODEL_ID, "model_revision": MODEL_REVISION, "train_clips": len(train_rows), "train_hours": train_record["hours"], "validation_clips": len(val_rows), "validation_hours": val_record["hours"], "test_data_used": False, "seed": args.seed, "physical_batch": args.physical_batch, "accumulation": args.accumulation, "effective_batch": 8, "validation_batch": args.validation_batch, "learning_rate": args.learning_rate, "repetition_penalty": args.repetition_penalty, "weight_decay": args.weight_decay, "max_epochs": args.max_epochs, "patience": args.patience, "best_epoch": best_epoch, "best_validation_cer": best_cer, "completed_steps": completed_steps, "total_wall_seconds": time.perf_counter() - run_started, "peak_allocated_mib": torch.cuda.max_memory_allocated(device) / 1024**2, "peak_reserved_mib": torch.cuda.max_memory_reserved(device) / 1024**2, "history": history}
     (args.output / "F1_report_private.json").write_text(json.dumps(report, indent=2) + "\n"); print("F1 complete; best epoch", best_epoch, "CER", 100 * best_cer)
 
 

@@ -41,4 +41,4 @@ The machine-readable aggregate is [`PHASE7_F1_LR_RESULTS_AGGREGATE.json`](PHASE7
 
 ## Next step
 
-Run the independent LoRA comparison from the original pinned checkpoint using the same frozen data and validation contract. Do not evaluate the sealed test split until the full-fine-tuning and LoRA configurations are selected using validation only.
+The independent LoRA comparison is complete; its best validation CER was 60.68416%, so the `2e-5` full fine-tuning checkpoint remains selected. The Phase 8 notebook predeclares B0 and this selected checkpoint for the frozen 683-clip test. Test outcomes are not yet reported here; do not use them to tune the model or decoding policy.
