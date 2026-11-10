@@ -31,7 +31,7 @@ The downloaded Phase 8 output archives cover all **683 test clips** and **65,577
 The post-hoc [descriptive EDA](PHASE8_DESCRIPTIVE_EDA.md) now covers duration, reference length, recorded gender/age, month/domain, paired clip edits and selected illustrative errors using saved predictions only. It did not choose a new checkpoint or decoding setting.
 
 1. Assemble the report and presentation using the [end-to-end handoff](REPORT_PRESENTATION_HANDOFF.md), the Phase 8 aggregate table, and the linked figure set. Clearly distinguish validation selection from the one declared test comparison.
-2. Review the three aggregate example outcomes in the [README](../README.md#examples-of-individual-test-outcomes). The project owner has a separate local private sheet with the exact strings for direct collaborator review. Do not treat those selected examples as representative or expert-adjudicated Nyishi text.
+2. Review the three quoted reference/prediction pairs in the [README](../README.md#examples-of-individual-test-outcomes) for clarity and slide readability. Do not treat those selected examples as representative or expert-adjudicated Nyishi text.
 3. Keep the frozen test set out of further model selection. A later matched-model or Dataset B study needs a separately declared evaluation design.
 
 Preserve unresolved identity/label uncertainty, month shift, prompt overlap and the lack of expert Nyishi adjudication when interpreting the test result.

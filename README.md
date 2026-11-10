@@ -589,15 +589,15 @@ The selected full fine-tuned configuration reduced test CER by 56.66 percentage 
 
 #### Examples of individual test outcomes
 
-Three saved test clips illustrate a range of results from the validation-selected F1 checkpoint. The exact dataset reference and prediction strings are retained in a **local private example sheet** for the project owner; they are omitted here under the repository publication rule for transcript text. These examples were selected after the test run for explanation and did **not** influence model selection.
+Three saved test clips illustrate a range of results from the validation-selected F1 checkpoint. The NFD-normalized dataset references and model predictions below were checked against the saved Phase 8 prediction archive. Dataset IDs, speaker metadata, audio, and provenance are omitted. These examples were selected after the test run for explanation and did **not** influence model selection.
 
-| Example | Clip duration | Clip CER and edit counts | What the reference/prediction comparison shows |
-|---|---:|---|---|
-| Relatively good | 9.73 s | **15.56%**; S=1, D=1, I=5 | Much of the annotated phrase is retained, with vowel/consonant and spacing errors. |
-| Remaining errors | 8.90 s | **39.80%**; S=23, D=8, I=8 | A repeated phrase is recognized but over-repeated; many IPA symbols differ. |
-| Difficult over-generation | 9.18 s | **80.30%**; S=12, D=3, I=38 | Extra continuation and repeated fragments drive a high insertion count despite normal EOS termination. |
+| Example | Dataset reference | Fine-tuned model prediction | Clip CER and edit counts | What it illustrates |
+|---|---|---|---|---|
+| Relatively good, 9.73 s | `ane suilo ane pajilo dente teminko ale nikune` | `ane suɨjilo o ane bajilo dente teminko aleni kune` | **15.56%**; S=1, D=1, I=5 | Much of the phrase is retained, with vowel/consonant and spacing errors. |
+| Remaining errors, 8.90 s | `ama dedub lod̪a lik bohel mulɡe pas moinaŋəm pas moinaŋəm mule pura aməm pel nalde pule amcerlendo` | `amədə dublo likbol həm mulge pas moɪnaŋəm pas moɪnaŋəm pas moɪnaŋəm pijəl nardəpublɯk həmcir lendo` | **39.80%**; S=23, D=8, I=8 | The repeated phrase is recognized but over-repeated; many IPA symbols differ. |
+| Difficult over-generation, 9.18 s | `komlaŋ ŋo si əki dena xeti to ŋul si tikma mana istatiŋ eicemab ie` | `komɛmləŋe ŋaŋoŋ siː akiː rana hetɨ t̪usa sam ŋul sija əjab tik məmana satik məma mana satin məcema bi` | **80.30%**; S=12, D=3, I=38 | Extra continuation and repeated fragments drive a high insertion count despite normal EOS termination. |
 
-The per-clip CER is `(S + D + I) / reference code points`. These selected examples are **illustrative, not an estimate of average performance**; the primary result remains corpus CER over all 683 test clips. All three ended with EOS. The project owner can share the private example sheet directly with a report collaborator when appropriate.
+The per-clip CER is `(S + D + I) / reference code points`. These selected examples are **illustrative, not an estimate of average performance**; the primary result remains corpus CER over all 683 test clips. All three ended with EOS. The reference annotations have not been independently adjudicated by a Nyishi expert, and no English translations are claimed.
 
 ### 5.2 Post-hoc dataset and final-test EDA
 
