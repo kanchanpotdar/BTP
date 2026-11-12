@@ -980,6 +980,45 @@ For each clip, **clip CER = 100 × (substitutions + deletions + insertions) / re
 
 All these comparisons are **post-hoc test descriptions**. They strengthen the report's account of where errors remain; they cannot be used to choose a different model, decoding penalty, or data split. The EDA report also includes a paired component-resampling interval, explicitly limited by the test set's 13 components.
 
+### 5.3 Symbol, coverage, difficult-clip and component diagnostics
+
+The [thesis diagnostics report](docs/PHASE8_THESIS_DIAGNOSTICS.md) adds four **descriptive** analyses from the saved B0/F1 test predictions and frozen train/test manifests. The [commented Python code](scripts/phase8_thesis_diagnostics.py) verifies input hashes, clip coverage, references and the original S/D/I counts before writing the [aggregate JSON](assets/phase8/thesis_diagnostics/phase8_thesis_diagnostics_aggregate.json) and plots. It performs no inference, training or test-based selection. Published results omit IDs, transcripts, audio and component mappings.
+
+#### IPA-like symbol errors
+
+The edit alignment follows the original NFD **code-point** scorer and its tie order. Among reference positions, the selected model substituted or deleted `ə` (U+0259) in **1,313 of 1,853** occurrences, the combining dental mark (U+032A) in **683 of 859**, and the length mark `ː` (U+02D0) in **646 of 774**. These are alignment diagnostics, not expert judgments of phoneme recognition. Combining marks count separately from base letters, and equally optimal edit alignments may assign operations differently.
+
+![Most affected non-space reference code points](assets/phase8/thesis_diagnostics/01_symbol_errors.png)
+
+**Figure — Reference-symbol errors.** Bars show substitution and deletion counts for the most affected non-space code points. Common symbols can have large counts even at moderate per-symbol error rates. See the separate [inserted-symbol](assets/phase8/thesis_diagnostics/01b_inserted_symbols.png) and [substitution-pair](assets/phase8/thesis_diagnostics/01c_substitution_pairs.png) figures for output-side errors.
+
+#### Training coverage and reference length
+
+Frozen train references contain **83 distinct code points** and test references **69**. Seven test symbols are absent from train, but together account for only **9 of 65,577** test reference positions. The 53 positions whose symbols appear fewer than 100 times in training were all substituted or deleted under this alignment; this tiny, mixed group does **not** establish a general rare-symbol error rate or causal effect.
+
+![Test symbol errors by frequency in training references](assets/phase8/thesis_diagnostics/02_train_symbol_coverage.png)
+
+**Figure — Symbol coverage.** Each bar divides substituted-plus-deleted reference positions by all test reference positions in that training-frequency band. Insertions are excluded because they have no reference-symbol denominator. Counts above the bars show why the rarest bins need caution. The [train/test reference-length comparison](assets/phase8/thesis_diagnostics/03_reference_length_coverage.png) shows a larger >120-code-point share in training (39.35%) than in test (30.01%).
+
+#### High-error clips and held-out components
+
+| Saved-result diagnostic | Finding |
+|---|---|
+| F1 clips with CER ≥100% | **14 of 683**; median reference length **27** code points versus **83** for the other 669 clips |
+| Edits in those 14 clips | **221 S / 5 D / 635 I**; insertions are **73.75%** of their edits |
+| Generation stopping in those 14 clips | **14 EOS endings; 0 cap hits** |
+| F1 CER across 13 observed components | **35.26%–60.95%**; component sizes range from **11 to 226 clips** |
+
+![Aggregate comparison of high-error and other clips](assets/phase8/thesis_diagnostics/03b_difficult_clips.png)
+
+**Figure — Difficult clips.** The 14 clips at or above 100% CER have shorter references and proportionally more insertions. They are selected *by high CER*, so these properties are descriptive, not independent predictors. The repeated-trigram difference is modest and does not by itself prove hallucination.
+
+![B0 and F1 CER across anonymous held-out components](assets/phase8/thesis_diagnostics/04_component_cer.png)
+
+**Figure — Component variation.** F1 improves on B0 in every observed component, but component CER varies and component sizes differ. Anonymous labels are ordered by clip count and have no published ID mapping. The primary corpus CER remains weighted by reference code points across **all 683 clips**, not by averaging these bars.
+
+These analyses explain the fixed final result; they do not revise the **44.57%** held-out corpus CER or justify changing the selected model after test evaluation.
+
 ---
 
 ## 6. Reproducibility and project materials
