@@ -935,7 +935,16 @@ For each clip, **clip CER = 100 × (substitutions + deletions + insertions) / re
 
 ![Clip CER percentiles for B0 and selected F1](assets/phase8/clip_cer_distribution/03_clip_cer_quantiles.png)
 
-**Figure — Median and upper-tail errors.** Median clip CER drops from **75.00% (B0)** to **43.90% (F1)**; the 90th percentile drops from **154.23%** to **67.87%**. The figure stops at the 90th percentile because a few very short-reference clips have extremely high percentages. Quantiles give every clip equal weight, unlike corpus CER.
+**Figure — Clip-level CER percentiles.** The selected model shifts the distribution toward lower error, including its middle and upper quartiles. The figure stops at the 90th percentile because a few very short-reference clips have extremely high percentages; all 683 clips remain in the calculations.
+
+| Measure on the same 683 clips | B0 zero-shot | Selected F1 |
+|---|---:|---:|
+| **25th percentile of clip CER** | 62.80% | **36.71%** |
+| **Median clip CER** | 75.00% | **43.90%** |
+| **75th percentile of clip CER** | 98.01% | **53.63%** |
+| **Corpus CER** | 101.23% | **44.57%** |
+
+The first three rows give **each clip equal weight**. Thus, 75% of selected-model clips have CER at or below approximately **53.63%**, versus **98.01%** for B0. Corpus CER instead divides total edits by the **65,577 reference code points** across all clips and remains the primary metric. Individual clips can exceed 100% CER when edits outnumber reference code points. Values were recalculated directly from the saved B0 and F1 prediction rows; the [aggregate quantile file](assets/phase8/clip_cer_distribution/clip_cer_distribution_aggregate.json) records their full precision.
 
 #### CER versus duration and reference length
 
