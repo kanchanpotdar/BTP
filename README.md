@@ -544,6 +544,12 @@ See the [learning-rate report](docs/PHASE7_F1_LR_RESULTS.md),
 [aggregate metrics](docs/PHASE7_F1_LR_RESULTS_AGGREGATE.json), and [public
 results notebook](notebooks/Phase-7-F1-Learning-Rate-Results-Public.ipynb).
 
+#### Overfitting and underfitting: what the logs show
+
+The [retrospective analysis](docs/PHASE7_OVERFITTING_UNDERFITTING_ANALYSIS.md) compares saved **training loss** with **validation corpus CER** for all three full fine-tuning runs. In the selected `2e-5` run, training loss fell from **0.377 at Epoch 5** to **0.108 at Epoch 8**, while validation CER rose from **47.24% to 49.95%**. The same broad post-best divergence appears in the other runs, although their validation curves fluctuate. This **later-epoch overfitting pattern** supports selecting the minimum-CER checkpoint and using patience-3 early stopping.
+
+It does **not** establish that the selected Epoch 5 model was underfit, nor does it quantify a train–validation error gap: the logs contain teacher-forced training loss and free-running validation CER, which are different measures, but no training-set CER or validation loss. The selected model's later **44.57% held-out test CER** measures its performance on another partition; it was not used to revise the checkpoint choice.
+
 ### Phase 7 L1 — LoRA comparison
 
 Three independent LoRA runs started from the pinned original checkpoint and used the same frozen 3,629/732 train/validation split, IPA normalization, CER, validation batch, and repetition penalty 1.08. The 683-clip test set remained sealed.
