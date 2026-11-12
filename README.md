@@ -903,6 +903,34 @@ The [self-contained EDA notebook](notebooks/Phase-8-Descriptive-EDA-Public.ipynb
 
 **Figure — Variation behind the corpus score.** The cumulative curves show a broad shift toward lower per-clip CER after fine-tuning. F1 makes fewer edits than B0 on **624 clips**, the same number on **14**, and more on **45**. This paired count is descriptive; corpus CER remains the primary score. The displayed CER axis stops at 200%, with higher-CER clips still included in every aggregate.
 
+#### How many test clips meet a CER threshold?
+
+For each clip, **clip CER = 100 × (substitutions + deletions + insertions) / reference code points**. The thresholds below are strict: a clip at exactly 50% is excluded from the `<50%` count. These clip shares complement the character-weighted **corpus CER**, which remains the primary result. The [aggregate JSON](assets/phase8/clip_cer_distribution/clip_cer_distribution_aggregate.json) and [commented calculation code](scripts/phase8_clip_cer_distribution.py) were produced from the two saved Phase 8 prediction files; no inference or tuning was run.
+
+| Clip CER | B0 clips | B0 share | Selected F1 clips | Selected F1 share |
+|---|---:|---:|---:|---:|
+| **<25%** | 1 / 683 | 0.15% | **41 / 683** | **6.00%** |
+| **<50%** | 47 / 683 | 6.88% | **432 / 683** | **63.25%** |
+| **<75%** | 341 / 683 | 49.93% | **631 / 683** | **92.39%** |
+| **<100%** | 515 / 683 | 75.40% | **669 / 683** | **97.95%** |
+| **≥100%** | 168 / 683 | 24.60% | **14 / 683** | **2.05%** |
+
+![Number of test clips below each CER threshold](assets/phase8/clip_cer_distribution/02_clip_cer_thresholds.png)
+
+**Figure — Threshold counts.** Fine-tuning moves many clips below 50% CER: **432**, compared with **47** for B0. A threshold is a descriptive cutoff, not an accuracy score or model-selection rule.
+
+![Exclusive bands of clip CER](assets/phase8/clip_cer_distribution/04_clip_cer_bands.png)
+
+**Figure — Exclusive error bands.** Each clip appears in exactly one band, so each model’s bars total **683**. The selected model still has **14 clips at or above 100% CER**, where edits equal or exceed reference length.
+
+![Cumulative share of test clips by clip CER](assets/phase8/clip_cer_distribution/01_clip_cer_cumulative.png)
+
+**Figure — Cumulative clip CER.** At any point on the horizontal axis, the curve shows the percentage of clips with CER at or below that value. The plotted axis stops at 200% to keep the main distribution readable; the higher-error clips remain in the threshold table and aggregate JSON.
+
+![Clip CER percentiles for B0 and selected F1](assets/phase8/clip_cer_distribution/03_clip_cer_quantiles.png)
+
+**Figure — Median and upper-tail errors.** Median clip CER drops from **75.00% (B0)** to **43.90% (F1)**; the 90th percentile drops from **154.23%** to **67.87%**. The figure stops at the 90th percentile because a few very short-reference clips have extremely high percentages. Quantiles give every clip equal weight, unlike corpus CER.
+
 #### CER versus duration and reference length
 
 | Test duration | Clips | F1 corpus CER |

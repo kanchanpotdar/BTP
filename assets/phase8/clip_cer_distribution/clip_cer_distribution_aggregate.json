@@ -1,0 +1,105 @@
+{
+  "source": "saved Phase 8 B0 and selected F1 test predictions",
+  "scope": "same 683 frozen held-out clips; no inference or tuning",
+  "clip_cer_definition": "100 * (S + D + I) / len(NFD-normalized reference)",
+  "threshold_rule": "strictly below; equality excluded",
+  "quantile_method": "NumPy percentile, linear interpolation",
+  "models": {
+    "B0": {
+      "clips": 683,
+      "reference_code_points": 65577,
+      "corpus_cer_percent": 101.23213931713863,
+      "substitutions": 36940,
+      "deletions": 4395,
+      "insertions": 25050,
+      "exact_zero_cer_clips": 0,
+      "thresholds_strictly_below_percent": {
+        "10": {
+          "clips": 0,
+          "percent_of_clips": 0.0
+        },
+        "25": {
+          "clips": 1,
+          "percent_of_clips": 0.14641288433382138
+        },
+        "50": {
+          "clips": 47,
+          "percent_of_clips": 6.881405563689605
+        },
+        "75": {
+          "clips": 341,
+          "percent_of_clips": 49.926793557833086
+        },
+        "100": {
+          "clips": 515,
+          "percent_of_clips": 75.40263543191801
+        }
+      },
+      "cer_at_least_100_percent": 168,
+      "clip_cer_quantiles_percent": {
+        "0": 20.0,
+        "10": 52.833256634453136,
+        "25": 62.795239548367405,
+        "50": 75.0,
+        "75": 98.00753370340999,
+        "90": 154.2254449571523,
+        "100": 2654.5454545454545
+      },
+      "exclusive_cer_bands": {
+        "0–<25": 1,
+        "25–<50": 46,
+        "50–<75": 294,
+        "75–<100": 174,
+        "≥100": 168
+      }
+    },
+    "Selected F1": {
+      "clips": 683,
+      "reference_code_points": 65577,
+      "corpus_cer_percent": 44.57355475242844,
+      "substitutions": 13525,
+      "deletions": 6158,
+      "insertions": 9547,
+      "exact_zero_cer_clips": 2,
+      "thresholds_strictly_below_percent": {
+        "10": {
+          "clips": 5,
+          "percent_of_clips": 0.7320644216691069
+        },
+        "25": {
+          "clips": 41,
+          "percent_of_clips": 6.002928257686676
+        },
+        "50": {
+          "clips": 432,
+          "percent_of_clips": 63.250366032210835
+        },
+        "75": {
+          "clips": 631,
+          "percent_of_clips": 92.3865300146413
+        },
+        "100": {
+          "clips": 669,
+          "percent_of_clips": 97.9502196193265
+        }
+      },
+      "cer_at_least_100_percent": 14,
+      "clip_cer_quantiles_percent": {
+        "0": 0.0,
+        "10": 28.820078226857888,
+        "25": 36.705494209534066,
+        "50": 43.90243902439025,
+        "75": 53.62926829268292,
+        "90": 67.87497617686299,
+        "100": 2090.909090909091
+      },
+      "exclusive_cer_bands": {
+        "0–<25": 41,
+        "25–<50": 391,
+        "50–<75": 199,
+        "75–<100": 38,
+        "≥100": 14
+      }
+    }
+  }
+}
